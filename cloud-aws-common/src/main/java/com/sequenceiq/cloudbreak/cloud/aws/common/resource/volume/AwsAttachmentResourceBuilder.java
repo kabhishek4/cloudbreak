@@ -58,7 +58,8 @@ public class AwsAttachmentResourceBuilder extends AbstractAwsComputeBuilder {
     private VolumeResourceCollector volumeResourceCollector;
 
     @Override
-    public List<CloudResource> create(AwsContext context, CloudInstance instance, long privateId, AuthenticatedContext auth, Group group, Image image) {
+    public List<CloudResource> create(AwsContext context, CloudInstance instance, long privateId,
+        AuthenticatedContext auth, Group group, Image image) {
         LOGGER.debug("Prepare instance resource to attach to");
         return context.getComputeResources(privateId);
     }
@@ -126,6 +127,12 @@ public class AwsAttachmentResourceBuilder extends AbstractAwsComputeBuilder {
             LOGGER.error("Volume attachment were unsuccessful.");
             throw new CloudbreakServiceException("Volume attachment were unsuccessful. " + throwable.getMessage(), throwable);
         }
+    }
+
+    @Override
+    public List<CloudResource> update(AwsContext context, CloudInstance instance, long privateId,
+        AuthenticatedContext auth, Group group, CloudStack cloudStack) throws Exception {
+        return null;
     }
 
     @Override

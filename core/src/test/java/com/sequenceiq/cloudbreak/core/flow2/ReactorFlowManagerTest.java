@@ -30,6 +30,7 @@ import com.sequenceiq.cloudbreak.TestUtil;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.autoscales.request.InstanceGroupAdjustmentV4Request;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.request.CertificatesRotationV4Request;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.request.HostGroupAdjustmentV4Request;
+import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.request.StackVerticalScaleV4Request;
 import com.sequenceiq.cloudbreak.cloud.model.CloudPlatformVariant;
 import com.sequenceiq.cloudbreak.cloud.model.Variant;
 import com.sequenceiq.cloudbreak.common.event.AcceptResult;
@@ -157,6 +158,7 @@ public class ReactorFlowManagerTest {
         underTest.triggerClusterServicesRestart(STACK_ID);
         underTest.triggerClusterProxyConfigReRegistration(STACK_ID);
         underTest.triggerRotateSaltPassword(STACK_ID);
+        underTest.triggerVerticalScale(STACK_ID, new StackVerticalScaleV4Request());
 
         int count = 0;
         for (Method method : underTest.getClass().getDeclaredMethods()) {
