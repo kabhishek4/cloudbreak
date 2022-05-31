@@ -68,7 +68,6 @@ import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_NODESTA
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_OS_UPGRADE_DATAHUB;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_PUBLIC_ENDPOINT_ACCESS_GATEWAY_AZURE;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_PUBLIC_ENDPOINT_ACCESS_GATEWAY_GCP;
-import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_ROTATE_SALTUSER_PASSWORD;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_RUNTIME_UPGRADE;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_RUNTIME_UPGRADE_DATAHUB;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_SAAS;
@@ -511,7 +510,9 @@ public class EntitlementService {
     }
 
     public boolean isSaltUserPasswordRotationEnabled(String accountId) {
-        return isEntitlementRegistered(accountId, CDP_ROTATE_SALTUSER_PASSWORD);
+        boolean entitled = true;
+        return entitled;
+//        return isEntitlementRegistered(accountId, CDP_ROTATE_SALTUSER_PASSWORD);
     }
 
     public List<String> getEntitlements(String accountId) {
