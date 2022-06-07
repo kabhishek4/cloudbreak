@@ -36,6 +36,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.common.DetailedStackStatus;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.InstanceStatus;
 import com.sequenceiq.cloudbreak.cloud.context.CloudContext;
+import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartUpscaleGetStartedInstancesRequest;
+import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartUpscaleGetStartedInstancesResult;
 import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartUpscaleStartInstancesRequest;
 import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartUpscaleStartInstancesResult;
 import com.sequenceiq.cloudbreak.cloud.model.CloudCredential;
@@ -47,7 +49,6 @@ import com.sequenceiq.cloudbreak.common.type.ClusterManagerType;
 import com.sequenceiq.cloudbreak.converter.CloudInstanceIdToInstanceMetaDataConverter;
 import com.sequenceiq.cloudbreak.converter.spi.InstanceMetaDataToCloudInstanceConverter;
 import com.sequenceiq.cloudbreak.core.flow2.cluster.stopstartus.StopStartUpscaleActions.AbstractStopStartUpscaleActions;
-import com.sequenceiq.cloudbreak.core.flow2.event.StopStartUpscaleTriggerEvent;
 import com.sequenceiq.cloudbreak.core.flow2.stack.AbstractStackFailureAction;
 import com.sequenceiq.cloudbreak.core.flow2.stack.StackFailureContext;
 import com.sequenceiq.cloudbreak.domain.StackAuthentication;
@@ -133,14 +134,11 @@ public class StopStartUpscaleActionsTest {
 
     @Test
     void testStartInstancesAction() throws Exception {
-        AbstractStopStartUpscaleActions<StopStartUpscaleTriggerEvent> action = (AbstractStopStartUpscaleActions<StopStartUpscaleTriggerEvent>)
-                underTest.startInstancesAction();
+        AbstractStopStartUpscaleActions<StopStartUpscaleGetStartedInstancesResult> action =
+                (AbstractStopStartUpscaleActions<StopStartUpscaleGetStartedInstancesResult>) underTest.startInstancesAction();
         initActionPrivateFields(action);
 
         StopStartUpscaleContext stopStartUpscaleContext = createContext(5);
-        StopStartUpscaleTriggerEvent payload = new StopStartUpscaleTriggerEvent(
-                SELECTOR, STACK_ID, INSTANCE_GROUP_NAME_ACTIONABLE,
-                5, ClusterManagerType.CLOUDERA_MANAGER);
 
         List<InstanceMetaData> instancesActionableNotStopped =
                 generateInstances(5, 100, InstanceStatus.SERVICES_HEALTHY, INSTANCE_GROUP_NAME_ACTIONABLE);
@@ -150,6 +148,14 @@ public class StopStartUpscaleActionsTest {
                 generateInstances(3, 300, InstanceStatus.SERVICES_HEALTHY, INSTANCE_GROUP_NAME_RANDOM);
         List<InstanceMetaData> instancesRandomStopped =
                 generateInstances(8, 400, InstanceStatus.STOPPED, INSTANCE_GROUP_NAME_RANDOM);
+
+        List<CloudInstance> allActionableInstances = convertToCloudInstance(instancesActionableNotStopped);
+        allActionableInstances.addAll(convertToCloudInstance(instancesActionableStopped));
+        StopStartUpscaleGetStartedInstancesRequest request = new StopStartUpscaleGetStartedInstancesRequest(cloudContext, cloudCredential,
+                cloudStack, INSTANCE_GROUP_NAME_ACTIONABLE, 5, allActionableInstances);
+        StopStartUpscaleGetStartedInstancesResult payload = new StopStartUpscaleGetStartedInstancesResult(STACK_ID, request,
+                convertToCloudInstance(instancesActionableStopped), 5, INSTANCE_GROUP_NAME_ACTIONABLE);
+
         // Mocks
         mockStackEtc(instancesActionableNotStopped, instancesActionableStopped, instancesRandomNotStopped, instancesRandomStopped);
         when(reactorEventFactory.createEvent(anyMap(), isNotNull())).thenReturn(event);

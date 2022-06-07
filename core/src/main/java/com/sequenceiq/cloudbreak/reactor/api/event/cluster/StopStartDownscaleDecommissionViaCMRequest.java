@@ -1,7 +1,9 @@
 package com.sequenceiq.cloudbreak.reactor.api.event.cluster;
 
+import java.util.List;
 import java.util.Set;
 
+import com.sequenceiq.cloudbreak.cloud.model.CloudInstance;
 import com.sequenceiq.cloudbreak.reactor.api.ClusterPlatformRequest;
 import com.sequenceiq.cloudbreak.reactor.api.event.HostGroupPayload;
 
@@ -11,10 +13,14 @@ public class StopStartDownscaleDecommissionViaCMRequest extends ClusterPlatformR
 
     private final Set<Long> instanceIdsToDecommission;
 
-    public StopStartDownscaleDecommissionViaCMRequest(Long resourceId, String hostGroupName, Set<Long> instanceIdsToDecommission) {
+    private final List<CloudInstance> runningInstancesWithServicesNotRunning;
+
+    public StopStartDownscaleDecommissionViaCMRequest(Long resourceId, String hostGroupName, Set<Long> instanceIdsToDecommission,
+            List<CloudInstance> runningInstancesWithServicesNotRunning) {
         super(resourceId);
         this.hostGroupName = hostGroupName;
         this.instanceIdsToDecommission = instanceIdsToDecommission;
+        this.runningInstancesWithServicesNotRunning = runningInstancesWithServicesNotRunning;
     }
 
     public Set<Long> getInstanceIdsToDecommission() {
@@ -24,6 +30,10 @@ public class StopStartDownscaleDecommissionViaCMRequest extends ClusterPlatformR
     @Override
     public String getHostGroupName() {
         return hostGroupName;
+    }
+
+    public List<CloudInstance> getRunningInstancesWithServicesNotRunning() {
+        return runningInstancesWithServicesNotRunning;
     }
 
     @Override

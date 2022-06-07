@@ -8,7 +8,6 @@ import static com.sequenceiq.cloudbreak.cloud.model.Region.region;
 import static com.sequenceiq.cloudbreak.core.flow2.cluster.stopstartus.StopStartUpscaleEvent.STOPSTART_UPSCALE_FAILURE_EVENT;
 import static com.sequenceiq.cloudbreak.core.flow2.cluster.stopstartus.StopStartUpscaleEvent.STOPSTART_UPSCALE_FINALIZED_EVENT;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +28,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.common.DetailedStackStatus;
 import com.sequenceiq.cloudbreak.auth.crn.Crn;
 import com.sequenceiq.cloudbreak.cloud.context.CloudContext;
+import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartUpscaleGetStartedInstancesRequest;
+import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartUpscaleGetStartedInstancesResult;
 import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartUpscaleStartInstancesRequest;
 import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartUpscaleStartInstancesResult;
 import com.sequenceiq.cloudbreak.cloud.model.CloudCredential;
@@ -73,8 +74,8 @@ public class StopStartUpscaleActions {
     @Inject
     private CloudInstanceIdToInstanceMetaDataConverter cloudInstanceIdToInstanceMetaDataConverter;
 
-    @Bean(name = "STOPSTART_UPSCALE_START_INSTANCE_STATE")
-    public Action<?, ?> startInstancesAction() {
+    @Bean(name = "STOPSTART_UPSCALE_GET_STARTED_INSTANCES_STATE")
+    public Action<?, ?> getPreStartedInstancesAction() {
         return new AbstractStopStartUpscaleActions<>(StopStartUpscaleTriggerEvent.class) {
 
             @Override
@@ -85,12 +86,29 @@ public class StopStartUpscaleActions {
 
             @Override
             protected void doExecute(StopStartUpscaleContext context, StopStartUpscaleTriggerEvent payload, Map<Object, Object> variables) throws Exception {
-                clusterUpscaleFlowService.startingInstances(context.getStack().getId(), payload.getHostGroupName(), payload.getAdjustment());
-                sendEvent(context);
+                LOGGER.info("Trying to collect already started instances with services not running on cloud provider");
+                Stack stack = context.getStack();
+                List<InstanceMetaData> allInstancesMetadataForHostGroup = stack.getNotDeletedAndNotZombieInstanceMetaDataList().stream()
+                        .filter(i -> i.getInstanceGroupName().equals(context.getHostGroupName()))
+                        .collect(Collectors.toList());
+                List<CloudInstance> allCloudInstancesInHostGroup = instanceMetaDataToCloudInstanceConverter.convert(allInstancesMetadataForHostGroup,
+                        stack.getEnvironmentCrn(), stack.getStackAuthentication());
+                StopStartUpscaleGetStartedInstancesRequest getStartedInstancesRequest =
+                        new StopStartUpscaleGetStartedInstancesRequest(context.getCloudContext(), context.getCloudCredential(), context.getCloudStack(),
+                                context.getHostGroupName(), context.getAdjustment(), allCloudInstancesInHostGroup);
+                sendEvent(context, getStartedInstancesRequest);
             }
+        };
+    }
+
+    @Bean(name = "STOPSTART_UPSCALE_START_INSTANCE_STATE")
+    public Action<?, ?> startInstancesAction() {
+        return new AbstractStopStartUpscaleActions<>(StopStartUpscaleGetStartedInstancesResult.class) {
 
             @Override
-            protected Selectable createRequest(StopStartUpscaleContext context) {
+            protected void doExecute(StopStartUpscaleContext context, StopStartUpscaleGetStartedInstancesResult payload, Map<Object, Object> variables)
+                    throws Exception {
+                clusterUpscaleFlowService.startingInstances(context.getStack().getId(), payload.getHostGroupName(), payload.getAdjustment());
                 Stack stack = context.getStack();
                 List<InstanceMetaData> instanceMetaDataList = stack.getNotDeletedAndNotZombieInstanceMetaDataList();
 
@@ -109,8 +127,10 @@ public class StopStartUpscaleActions {
                 List<CloudInstance> allCloudInstancesForHg = instanceMetaDataToCloudInstanceConverter.convert(instanceMetaDataForHg,
                         stack.getEnvironmentCrn(), stack.getStackAuthentication());
 
-                return new StopStartUpscaleStartInstancesRequest(context.getCloudContext(), context.getCloudCredential(), context.getCloudStack(),
-                        context.getHostGroupName(), stoppedCloudInstancesForHg, allCloudInstancesForHg, Collections.emptyList(), context.getAdjustment());
+                StopStartUpscaleStartInstancesRequest startInstancesRequest = new StopStartUpscaleStartInstancesRequest(context.getCloudContext(),
+                        context.getCloudCredential(), context.getCloudStack(), context.getHostGroupName(), stoppedCloudInstancesForHg, allCloudInstancesForHg,
+                        payload.getStartedInstancesWithServicesNotRunning(), context.getAdjustment());
+                sendEvent(context, startInstancesRequest);
             }
         };
     }

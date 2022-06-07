@@ -51,7 +51,9 @@ import com.sequenceiq.cloudbreak.logger.MDCBuilder;
 import com.sequenceiq.cloudbreak.reactor.api.event.StackEvent;
 import com.sequenceiq.cloudbreak.reactor.api.event.StackFailureEvent;
 import com.sequenceiq.cloudbreak.reactor.api.event.cluster.StopStartDownscaleDecommissionViaCMRequest;
+import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartDownscaleGetRunningInstancesRequest;
 import com.sequenceiq.cloudbreak.reactor.api.event.orchestration.StopStartDownscaleDecommissionViaCMResult;
+import com.sequenceiq.cloudbreak.cloud.event.instance.StopStartDownscaleGetRunningInstancesResult;
 import com.sequenceiq.cloudbreak.service.resource.ResourceService;
 import com.sequenceiq.cloudbreak.service.stack.StackService;
 import com.sequenceiq.cloudbreak.util.StackUtil;
@@ -74,9 +76,8 @@ public class StopStartDownscaleActions {
     @Inject
     private CloudInstanceIdToInstanceMetaDataConverter cloudInstanceIdToInstanceMetaDataConverter;
 
-    // TODO CB-15132: Potential pre-flight checks. YARN / appropriate service masters available. CM master available.
-    @Bean(name = "STOPSTART_DOWNSCALE_HOSTS_DECOMMISSION_STATE")
-    public Action<?, ?> decommissionViaCmAction() {
+    @Bean(name = "STOPSTART_DOWNSCALE_GET_RUNNING_INSTANCES_STATE")
+    public Action<?, ?> getRunningInstancesAction() {
         return new AbstractStopStartDownscaleActions<>(StopStartDownscaleTriggerEvent.class) {
 
             @Override
@@ -86,15 +87,34 @@ public class StopStartDownscaleActions {
             }
 
             @Override
-            protected void doExecute(
-                    StopStartDownscaleContext context, StopStartDownscaleTriggerEvent payload, Map<Object, Object> variables) throws Exception {
-                stopStartDownscaleFlowService.clusterDownscaleStarted(context.getStack().getId(), payload.getHostGroupName(), payload.getHostIds());
-                sendEvent(context);
+            protected void doExecute(StopStartDownscaleContext context, StopStartDownscaleTriggerEvent payload, Map<Object, Object> variables) throws Exception {
+                Stack stack = context.getStack();
+
+                List<InstanceMetaData> allInstanceMetadataInHostGroup = stack.getNotDeletedAndNotZombieInstanceMetaDataList().stream()
+                        .filter(i -> i.getInstanceGroupName().equals(context.getHostGroupName()))
+                        .collect(Collectors.toList());
+
+                List<CloudInstance> allInstancesInHostGroup = instanceMetaDataToCloudInstanceConverter.convert(allInstanceMetadataInHostGroup,
+                        stack.getEnvironmentCrn(), stack.getStackAuthentication());
+                StopStartDownscaleGetRunningInstancesRequest request = new StopStartDownscaleGetRunningInstancesRequest(context.getCloudContext(),
+                        context.getCloudCredential(), context.getCloudStack(), context.getHostGroupName(), allInstancesInHostGroup, payload.getHostIds());
+                sendEvent(context, request);
             }
+        };
+    }
+
+    // TODO CB-15132: Potential pre-flight checks. YARN / appropriate service masters available. CM master available.
+    @Bean(name = "STOPSTART_DOWNSCALE_HOSTS_DECOMMISSION_STATE")
+    public Action<?, ?> decommissionViaCmAction() {
+        return new AbstractStopStartDownscaleActions<>(StopStartDownscaleGetRunningInstancesResult.class) {
 
             @Override
-            protected Selectable createRequest(StopStartDownscaleContext context) {
-                return new StopStartDownscaleDecommissionViaCMRequest(context.getStack().getId(), context.getHostGroupName(), context.getHostIdsToRemove());
+            protected void doExecute(
+                    StopStartDownscaleContext context, StopStartDownscaleGetRunningInstancesResult payload, Map<Object, Object> variables) throws Exception {
+                stopStartDownscaleFlowService.clusterDownscaleStarted(context.getStack().getId(), payload.getHostGroupName(), payload.getHostIds());
+                StopStartDownscaleDecommissionViaCMRequest request = new StopStartDownscaleDecommissionViaCMRequest(context.getStack().getId(),
+                        context.getHostGroupName(), context.getHostIdsToRemove(), payload.getRunningInstancesWithServicesNotRunning());
+                sendEvent(context, request);
             }
         };
     }

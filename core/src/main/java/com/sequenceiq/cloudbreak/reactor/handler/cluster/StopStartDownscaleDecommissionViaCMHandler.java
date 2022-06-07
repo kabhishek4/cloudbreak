@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -21,9 +22,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.InstanceStatus;
+import com.sequenceiq.cloudbreak.cloud.model.CloudInstance;
 import com.sequenceiq.cloudbreak.cluster.api.ClusterDecomissionService;
 import com.sequenceiq.cloudbreak.common.event.Selectable;
 import com.sequenceiq.cloudbreak.common.exception.NotFoundException;
+import com.sequenceiq.cloudbreak.converter.CloudInstanceIdToInstanceMetaDataConverter;
 import com.sequenceiq.cloudbreak.core.flow2.stack.CloudbreakFlowMessageService;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.Cluster;
@@ -63,6 +66,9 @@ public class StopStartDownscaleDecommissionViaCMHandler extends ExceptionCatcher
     @Inject
     private CloudbreakFlowMessageService flowMessageService;
 
+    @Inject
+    private CloudInstanceIdToInstanceMetaDataConverter cloudInstanceIdToInstanceMetaDataConverter;
+
     @Override
     public String selector() {
         return EventSelectorUtil.selector(StopStartDownscaleDecommissionViaCMRequest.class);
@@ -91,14 +97,34 @@ public class StopStartDownscaleDecommissionViaCMHandler extends ExceptionCatcher
             HostGroup hostGroup = hostGroupService.getByClusterIdAndName(cluster.getId(), request.getHostGroupName())
                     .orElseThrow(NotFoundException.notFound("hostgroup", request.getHostGroupName()));
 
+            List<InstanceMetaData> instancesWithServicesNotRunning = cloudInstanceIdToInstanceMetaDataConverter.getNotDeletedAndNotZombieInstances(stack,
+                    request.getHostGroupName(),
+                    request.getRunningInstancesWithServicesNotRunning().stream()
+                            .map(CloudInstance::getInstanceId)
+                            .collect(Collectors.toSet()));
+
             Map<String, InstanceMetaData> hostsToRemove = clusterDecomissionService.collectHostsToRemove(hostGroup, hostNames);
             List<String> missingHostsInCm = Collections.emptyList();
+            Map<String, InstanceMetaData> finalHostsToRemove = hostsToRemove;
             if (hostNames.size() != hostsToRemove.size()) {
                 missingHostsInCm = hostNames.stream()
-                        .filter(h -> !hostsToRemove.containsKey(h))
+                        .filter(h -> !finalHostsToRemove.containsKey(h))
                         .collect(Collectors.toList());
                 LOGGER.info("Found fewer instances in CM to decommission, as compared to initial ask. foundCount={}, initialCount={}, missingHostsInCm={}",
                         hostsToRemove.size(), hostNames.size(), missingHostsInCm);
+            }
+
+            List<InstanceMetaData> additionalInstancesWithServicesNotRunningToDecommission = instancesWithServicesNotRunning
+                    .stream().filter(i -> !finalHostsToRemove.containsKey(i.getDiscoveryFQDN())).collect(Collectors.toList());
+
+            if (!additionalInstancesWithServicesNotRunningToDecommission.isEmpty()) {
+                LOGGER.info("Including running instances with services not running as part of hostsToDecommission");
+                int instancesToBeDecommissionedLimit = hostsToRemove.size() - additionalInstancesWithServicesNotRunningToDecommission.size();
+                List<InstanceMetaData> finalInstanceMetadataToRemove = hostsToRemove.values().stream().limit(instancesToBeDecommissionedLimit)
+                        .collect(Collectors.toList());
+                finalInstanceMetadataToRemove.addAll(additionalInstancesWithServicesNotRunningToDecommission);
+                // TODO: is it a good idea to edit what is directly returned by CM APIs?
+                hostsToRemove = finalInstanceMetadataToRemove.stream().collect(Collectors.toMap(InstanceMetaData::getDiscoveryFQDN, Function.identity()));
             }
 
             // TODO CB-14929: Potentially put the nodes into maintenance mode before decommissioning?

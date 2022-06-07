@@ -6,6 +6,7 @@ import static com.sequenceiq.cloudbreak.event.ResourceEvent.CLUSTER_SCALING_STOP
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,7 @@ import com.sequenceiq.cloudbreak.cloud.event.model.EventStatus;
 import com.sequenceiq.cloudbreak.cluster.api.ClusterApi;
 import com.sequenceiq.cloudbreak.cluster.api.ClusterDecomissionService;
 import com.sequenceiq.cloudbreak.common.event.Selectable;
+import com.sequenceiq.cloudbreak.converter.CloudInstanceIdToInstanceMetaDataConverter;
 import com.sequenceiq.cloudbreak.core.flow2.stack.CloudbreakFlowMessageService;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.Cluster;
@@ -74,6 +77,9 @@ public class StopStartDownscaleDecommissionViaCMHandlerTest {
 
     @Mock
     private CloudbreakFlowMessageService flowMessageService;
+
+    @Mock
+    private CloudInstanceIdToInstanceMetaDataConverter cloudInstanceIdToInstanceMetaDataConverter;
 
     @InjectMocks
     private StopStartDownscaleDecommissionViaCMHandler underTest;
@@ -135,7 +141,7 @@ public class StopStartDownscaleDecommissionViaCMHandlerTest {
         Set<String> hostnamesToDecommission = instancesToDecommission.stream().map(InstanceMetaData::getDiscoveryFQDN).collect(Collectors.toUnmodifiableSet());
 
         StopStartDownscaleDecommissionViaCMRequest request =
-                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission);
+                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission, Collections.emptyList());
         HandlerEvent handlerEvent = new HandlerEvent(Event.wrap(request));
         Selectable selectable = underTest.doAccept(handlerEvent);
 
@@ -171,7 +177,7 @@ public class StopStartDownscaleDecommissionViaCMHandlerTest {
         Set<String> hostnamesToDecommission = instancesToDecommission.stream().map(InstanceMetaData::getDiscoveryFQDN).collect(Collectors.toUnmodifiableSet());
 
         StopStartDownscaleDecommissionViaCMRequest request =
-                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission);
+                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission, Collections.emptyList());
         HandlerEvent handlerEvent = new HandlerEvent(Event.wrap(request));
         Selectable selectable = underTest.doAccept(handlerEvent);
 
@@ -208,7 +214,7 @@ public class StopStartDownscaleDecommissionViaCMHandlerTest {
         Set<String> hostnamesToDecommission = instancesToDecommission.stream().map(InstanceMetaData::getDiscoveryFQDN).collect(Collectors.toUnmodifiableSet());
 
         StopStartDownscaleDecommissionViaCMRequest request =
-                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission);
+                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission, Collections.emptyList());
         HandlerEvent handlerEvent = new HandlerEvent(Event.wrap(request));
         Selectable selectable = underTest.doAccept(handlerEvent);
 
@@ -245,7 +251,7 @@ public class StopStartDownscaleDecommissionViaCMHandlerTest {
                 .thenThrow(new RuntimeException("collectHostsToDecommissionError"));
 
         StopStartDownscaleDecommissionViaCMRequest request =
-                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission);
+                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission, Collections.emptyList());
         HandlerEvent handlerEvent = new HandlerEvent(Event.wrap(request));
         Selectable selectable = underTest.doAccept(handlerEvent);
         verify(clusterDecomissionService).collectHostsToRemove(eq(hostGroup), eq(hostnamesToDecommission));
@@ -285,7 +291,7 @@ public class StopStartDownscaleDecommissionViaCMHandlerTest {
                 .thenThrow(new RuntimeException("decommissionHostsError"));
 
         StopStartDownscaleDecommissionViaCMRequest request =
-                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission);
+                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission, Collections.emptyList());
         HandlerEvent handlerEvent = new HandlerEvent(Event.wrap(request));
         Selectable selectable = underTest.doAccept(handlerEvent);
         verify(clusterDecomissionService).collectHostsToRemove(eq(hostGroup), eq(hostnamesToDecommission));
@@ -321,7 +327,7 @@ public class StopStartDownscaleDecommissionViaCMHandlerTest {
         Set<String> hostnamesToDecommission = instancesToDecommission.stream().map(InstanceMetaData::getDiscoveryFQDN).collect(Collectors.toUnmodifiableSet());
 
         StopStartDownscaleDecommissionViaCMRequest request =
-                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission);
+                new StopStartDownscaleDecommissionViaCMRequest(1L, INSTANCE_GROUP_NAME, instanceIdsToDecommission, Collections.emptyList());
         HandlerEvent handlerEvent = new HandlerEvent(Event.wrap(request));
         Selectable selectable = underTest.doAccept(handlerEvent);
 
@@ -361,6 +367,9 @@ public class StopStartDownscaleDecommissionViaCMHandlerTest {
             Map<String, InstanceMetaData> collectedInstances, Set<String> decommissionedInstances) {
         lenient().when(stack.getInstanceMetaDataAsList()).thenReturn(allInstanceMetadata);
         lenient().when(stackService.getInstanceMetadata(any(), any())).thenCallRealMethod();
+        // TODO: Change this temporary mock once UTs are to be written
+        lenient().when(cloudInstanceIdToInstanceMetaDataConverter.getNotDeletedAndNotZombieInstances(any(), anyString(), anySet()))
+                .thenReturn(Collections.emptyList());
 
         lenient().when(hostGroupService.getByClusterIdAndName(eq(CLUSTER_ID), eq(INSTANCE_GROUP_NAME))).thenReturn(Optional.of(hostGroup));
 
