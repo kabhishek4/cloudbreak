@@ -157,6 +157,7 @@ public class ReactorFlowManagerTest {
         underTest.triggerClusterServicesRestart(STACK_ID);
         underTest.triggerClusterProxyConfigReRegistration(STACK_ID);
         underTest.triggerRotateSaltPassword(STACK_ID);
+        underTest.triggerCheckAtlasUpdated(STACK_ID);
 
         int count = 0;
         for (Method method : underTest.getClass().getDeclaredMethods()) {

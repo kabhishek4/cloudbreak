@@ -453,4 +453,10 @@ public class StackOperationService {
         clusterBootstrapper.validateRotateSaltPassword(stack);
         return flowManager.triggerRotateSaltPassword(stack.getId());
     }
+
+    public FlowIdentifier checkAtlasUpdated(@NotNull NameOrCrn nameOrCrn, Long workspaceId) {
+        Stack stack = stackService.getNotTerminatedByCrnInWorkspace(nameOrCrn.getCrn(), workspaceId);
+        MDCBuilder.buildMdcContext(stack);
+        return flowManager.triggerCheckAtlasUpdated(stack.getId());
+    }
 }
