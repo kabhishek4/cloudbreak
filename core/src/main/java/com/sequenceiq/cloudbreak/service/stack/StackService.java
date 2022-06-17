@@ -868,6 +868,13 @@ public class StackService implements ResourceIdProvider, AuthorizationResourceNa
                 .collect(Collectors.toList());
     }
 
+    public Set<Long> findDeletedStackIds() {
+        LOGGER.debug("About to fetch {}(s) that are deleted already.", Stack.class.getSimpleName());
+        Set<Long> idsForDeletedStacks = stackRepository.findDeletedStackIds();
+        LOGGER.debug("{} ids has found that belongs to deleted {} entries", idsForDeletedStacks.size(), Stack.class.getSimpleName());
+        return idsForDeletedStacks;
+    }
+
     public Set<Long> getPrivateIdsForHostNames(Collection<InstanceMetaData> instanceMetaDataList, Collection<String> hostNames) {
         return getInstanceMetadatasForHostNames(instanceMetaDataList, hostNames).stream()
                 .map(InstanceMetaData::getPrivateId).collect(Collectors.toSet());

@@ -450,4 +450,8 @@ public interface StackRepository extends WorkspaceResourceRepository<Stack, Long
             "AND s.terminated IS NULL " +
             "AND tunnel <> :latestTunnel")
     int getNotUpgradedStackCount(@Param("envCrn") String envCrn, @Param("latestTunnel") Tunnel latestTunnel);
+
+    @Query("SELECT s.id FROM Stack s WHERE s.terminated IS NOT NULL")
+    Set<Long> findDeletedStackIds();
+
 }

@@ -473,6 +473,14 @@ public class StackServiceTest {
         return component;
     }
 
+    @Test
+    public void testFetchDeletedStacks() {
+        Set<Long> expected = new HashSet<>();
+        when(stackRepository.findDeletedStackIds()).thenReturn(expected);
+
+        assertEquals(expected, underTest.findDeletedStackIds());
+    }
+
     private Set<StackIdView> findClusterConnectedToDatalake(
             Set<StackIdView> setOfStackThroughNewDatalakeCrn) throws TransactionExecutionException {
         when(stackRepository.findByDatalakeCrn(anyString())).thenReturn(new HashSet<>(setOfStackThroughNewDatalakeCrn));

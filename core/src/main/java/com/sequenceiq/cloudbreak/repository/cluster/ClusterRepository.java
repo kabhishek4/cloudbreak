@@ -63,4 +63,7 @@ public interface ClusterRepository extends WorkspaceResourceRepository<Cluster, 
             "JOIN c.stack s " +
             "WHERE s.resourceCrn = :stackResourceCrn")
     Optional<Cluster> findByStackResourceCrn(@Param("stackResourceCrn") String stackResourceCrn);
+
+    Set<Cluster> getByStatusIs(Status status);
+
 }

@@ -1,6 +1,7 @@
 package com.sequenceiq.cloudbreak.service.cluster;
 
 import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.AVAILABLE;
+import static com.sequenceiq.cloudbreak.api.endpoint.v4.common.Status.DELETE_COMPLETED;
 import static com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.InstanceStatus.SERVICES_HEALTHY;
 import static com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.InstanceStatus.SERVICES_RUNNING;
 import static com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.InstanceStatus.SERVICES_UNHEALTHY;
@@ -179,6 +180,13 @@ public class ClusterService {
             throw new BadRequestException(msg, ex);
         }
         return savedCluster;
+    }
+
+    public Set<Cluster> findDeletedClusters() {
+        LOGGER.debug("About to find {}(s) that has the following status: {}", Cluster.class.getSimpleName(), DELETE_COMPLETED.name());
+        Set<Cluster> deletedClusters = repository.getByStatusIs(DELETE_COMPLETED);
+        LOGGER.debug("{} deleted {}(s) has found.", deletedClusters.size(), Cluster.class.getSimpleName());
+        return deletedClusters;
     }
 
     public Iterable<Cluster> saveAll(Iterable<Cluster> clusters) {
