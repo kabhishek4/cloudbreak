@@ -47,6 +47,10 @@ public class DatabasePollerService {
         executeUserInsertPollerPolling(provider.insertUserPoller(ac, resources), resources);
     }
 
+    public void upgradeDatabasePoller(AuthenticatedContext ac, List<CloudResource> resources) {
+        executeUpgradeDatabasePollerPolling(provider.upgradeDatabasePoller(ac, resources), resources);
+    }
+
     public void terminateDatabasePoller(AuthenticatedContext ac, List<CloudResource> resources) {
         executeTerminateDatabasePollerPolling(provider.terminateDatabasePoller(ac, resources), resources);
     }
@@ -61,6 +65,15 @@ public class DatabasePollerService {
     }
 
     private void executeLaunchDatabasePollerPolling(AttemptMaker<Void> attemptMaker, List<CloudResource> resources) {
+        if (CollectionUtils.isNotEmpty(resources)) {
+            Polling.stopAfterAttempt(attemptCount)
+                    .stopIfException(true)
+                    .waitPeriodly(sleepTime, TimeUnit.SECONDS)
+                    .run(attemptMaker);
+        }
+    }
+
+    private void executeUpgradeDatabasePollerPolling(AttemptMaker<Void> attemptMaker, List<CloudResource> resources) {
         if (CollectionUtils.isNotEmpty(resources)) {
             Polling.stopAfterAttempt(attemptCount)
                     .stopIfException(true)
