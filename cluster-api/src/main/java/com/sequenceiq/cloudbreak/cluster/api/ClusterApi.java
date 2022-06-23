@@ -151,4 +151,6 @@ public interface ClusterApi {
     ClusterCommissionService clusterCommissionService();
 
     ClusterDiagnosticsService clusterDiagnosticsService();
+
+    ClusterHealthService clusterHealthService();
 }
