@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,6 +33,7 @@ import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.Cluster;
 import com.sequenceiq.cloudbreak.domain.stack.instance.InstanceMetaData;
 import com.sequenceiq.cloudbreak.domain.view.RdsConfigWithoutCluster;
+import com.sequenceiq.cloudbreak.dto.StackDto;
 import com.sequenceiq.cloudbreak.service.cluster.ClusterService;
 import com.sequenceiq.cloudbreak.service.secret.model.SecretResponse;
 import com.sequenceiq.cloudbreak.service.secret.service.SecretService;
@@ -83,16 +85,26 @@ class AbstractRdsConfigProviderTest {
         when(rdsConfigWithoutCluster.getDatabaseEngine()).thenReturn(DatabaseVendor.POSTGRES);
         when(rdsConfigWithoutCluster.getConnectionPassword()).thenReturn("pwd");
         Stack testStack = TestUtil.stack();
-        InstanceMetaData metaData = testStack.getNotTerminatedAndNotZombieGatewayInstanceMetadata().iterator().next();
+        StackDto stackDto = mock(StackDto.class);
+        InstanceMetaData metaData = new InstanceMetaData();
         metaData.setInstanceMetadataType(InstanceMetadataType.GATEWAY_PRIMARY);
-        testStack.getNotTerminatedAndNotZombieGatewayInstanceMetadata().add(metaData);
+        metaData.setDiscoveryFQDN("fqdn");
+        when(stackDto.getPrimaryGatewayInstance()).thenReturn(metaData);
         Cluster testCluster = TestUtil.cluster();
         testCluster.setId(1L);
-        testStack.setCluster(testCluster);
         testCluster.setRdsConfigs(new HashSet<>());
+        when(stackDto.getCluster()).thenReturn(testCluster);
+        when(stackDto.getStack()).thenReturn(testStack);
         when(rdsConfigWithoutClusterService.findByClusterId(anyLong())).thenReturn(Set.of(rdsConfigWithoutCluster));
 
-        Map<String, Object> result = underTest.createServicePillarConfigMapIfNeeded(testStack, testCluster);
+        Map<String, Object> result = underTest.createServicePillarConfigMapIfNeeded(stackDto);
+
+        ArgumentCaptor<RDSConfig> rdsConfigCaptor = ArgumentCaptor.forClass(RDSConfig.class);
+        verify(rdsConfigService).createIfNotExists(any(), rdsConfigCaptor.capture(), any());
+
+        assertEquals("CLOUDERA_MANAGER_simplestack1", rdsConfigCaptor.getValue().getName());
+        assertEquals(1, rdsConfigCaptor.getValue().getClusters().size());
+        assertEquals(1L, rdsConfigCaptor.getValue().getClusters().iterator().next().getId().longValue());
 
         ArgumentCaptor<RDSConfig> rdsConfigCaptor = ArgumentCaptor.forClass(RDSConfig.class);
         verify(rdsConfigService).createIfNotExists(any(), rdsConfigCaptor.capture(), any());
@@ -130,14 +142,13 @@ class AbstractRdsConfigProviderTest {
         when(secretService.getByResponse(username)).thenReturn(REMOTE_ADMIN);
         when(secretService.getByResponse(password)).thenReturn(REMOTE_ADMIN_PASSWORD);
         Stack testStack = TestUtil.stack();
-        InstanceMetaData metaData = testStack.getNotTerminatedAndNotZombieGatewayInstanceMetadata().iterator().next();
-        metaData.setInstanceMetadataType(InstanceMetadataType.GATEWAY_PRIMARY);
-        testStack.getNotTerminatedAndNotZombieGatewayInstanceMetadata().add(metaData);
+        StackDto stackDto = mock(StackDto.class);
         Cluster testCluster = TestUtil.cluster();
-        testStack.setCluster(testCluster);
+        when(stackDto.getCluster()).thenReturn(testCluster);
+        when(stackDto.getStack()).thenReturn(testStack);
         when(rdsConfigWithoutClusterService.findByClusterId(anyLong())).thenReturn(Set.of(rdsConfigWithoutCluster));
 
-        Map<String, Object> result = underTest.createServicePillarConfigMapIfNeeded(testStack, testCluster);
+        Map<String, Object> result = underTest.createServicePillarConfigMapIfNeeded(stackDto);
 
         Map<String, Object> postgresData = (Map<String, Object>) result.get("clouderamanager");
         assertEquals("clouderamanager", postgresData.get("database"));

@@ -5,13 +5,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import com.sequenceiq.cloudbreak.cloud.model.ClouderaManagerProduct;
 import com.sequenceiq.cloudbreak.cloud.model.component.StackRepoDetails;
-import com.sequenceiq.cloudbreak.cluster.model.ParcelInfo;
 import com.sequenceiq.cloudbreak.cluster.model.ParcelOperationStatus;
-import com.sequenceiq.cloudbreak.domain.stack.cluster.ClusterComponent;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.host.HostGroup;
 import com.sequenceiq.cloudbreak.domain.stack.instance.InstanceMetaData;
+import com.sequenceiq.cloudbreak.domain.view.ClusterComponentView;
 import com.sequenceiq.cloudbreak.dto.KerberosConfig;
 import com.sequenceiq.cloudbreak.service.CloudbreakException;
 import com.sequenceiq.common.api.telemetry.model.Telemetry;
@@ -34,25 +32,19 @@ public interface ClusterModificationService {
 
     void cleanupCluster(Telemetry telemetry) throws CloudbreakException;
 
-    void upgradeClusterRuntime(Set<ClusterComponent> components, boolean patchUpgrade, Optional<String> remoteDataContext) throws CloudbreakException;
+    void upgradeClusterRuntime(Set<ClusterComponentView> components, boolean patchUpgrade, Optional<String> remoteDataContext) throws CloudbreakException;
 
-    Set<ParcelInfo> gatherInstalledParcels(String stackName);
-
-    Set<ParcelInfo> getAllParcels(String stackName);
+    Map<String, String> gatherInstalledParcels(String stackName);
 
     void updateServiceConfigAndRestartService(String serviceName, String configName, String newConfigValue) throws Exception;
 
     void updateServiceConfig(String serviceName, Map<String, String> config) throws CloudbreakException;
 
-    void updateParcelSettings(Set<ClouderaManagerProduct> products) throws CloudbreakException;
-
-    void downloadParcels(Set<ClouderaManagerProduct> products) throws CloudbreakException;
-
-    void distributeParcels(Set<ClouderaManagerProduct> products) throws CloudbreakException;
+    void downloadAndDistributeParcels(Set<ClusterComponentView> components, boolean patchUpgrade) throws CloudbreakException;
 
     Optional<String> getRoleConfigValueByServiceType(String clusterName, String roleConfigGroup, String serviceType, String configName);
 
-    ParcelOperationStatus removeUnusedParcels(Set<ClusterComponent> usedParcelComponents, Set<String> parcelNamesFromImage)
+    ParcelOperationStatus removeUnusedParcels(Set<ClusterComponentView> usedParcelComponents, Set<String> parcelNamesFromImage)
             throws CloudbreakException;
 
     boolean isServicePresent(String clusterName, String serviceType);

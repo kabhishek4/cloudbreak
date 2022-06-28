@@ -53,7 +53,7 @@ spring:
     properties:
       hibernate:
         jdbc:
-          batch_size: 50
+          batch_size: 400
         order_inserts: true
         order_updates: true
   lifecycle:

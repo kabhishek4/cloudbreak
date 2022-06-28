@@ -26,7 +26,7 @@ import com.sequenceiq.cloudbreak.cluster.service.ClusterComponentConfigProvider;
 import com.sequenceiq.cloudbreak.domain.Blueprint;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.Cluster;
-import com.sequenceiq.cloudbreak.domain.stack.cluster.ClusterComponent;
+import com.sequenceiq.cloudbreak.domain.view.ClusterComponentView;
 import com.sequenceiq.cloudbreak.service.CloudbreakException;
 import com.sequenceiq.cloudbreak.service.cluster.ClusterApiConnectors;
 import com.sequenceiq.cloudbreak.service.upgrade.ClusterComponentUpdater;
@@ -77,7 +77,7 @@ public class ParcelServiceTest {
     void testRemoveUnusedComponents() throws CloudbreakException {
         Stack stack = createStack();
         Set<String> parcelNames = Set.of(PARCEL_NAME);
-        Set<ClusterComponent> clusterComponentsByBlueprint = Collections.emptySet();
+        Set<ClusterComponentView> clusterComponentsByBlueprint = Collections.emptySet();
         ParcelOperationStatus removalStatus = new ParcelOperationStatus();
 
         when(clusterApiConnectors.getConnector(stack)).thenReturn(clusterApi);

@@ -6,24 +6,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import com.sequenceiq.cloudbreak.cloud.model.ClouderaManagerProduct;
-import com.sequenceiq.cloudbreak.cluster.model.ParcelInfo;
 import com.sequenceiq.cloudbreak.cluster.model.ParcelOperationStatus;
 import com.sequenceiq.cloudbreak.cluster.service.ClusterClientInitException;
 import com.sequenceiq.cloudbreak.cluster.status.ClusterStatus;
-import com.sequenceiq.cloudbreak.domain.stack.Stack;
-import com.sequenceiq.cloudbreak.domain.stack.cluster.ClusterComponent;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.host.HostGroup;
 import com.sequenceiq.cloudbreak.domain.stack.instance.InstanceMetaData;
+import com.sequenceiq.cloudbreak.domain.view.ClusterComponentView;
 import com.sequenceiq.cloudbreak.polling.ExtendedPollingResult;
 import com.sequenceiq.cloudbreak.service.CloudbreakException;
+import com.sequenceiq.cloudbreak.view.InstanceMetadataView;
 import com.sequenceiq.common.api.telemetry.model.Telemetry;
 
 public interface ClusterApi {
 
     String CLOUDERA_MANAGER = "CLOUDERA_MANAGER";
 
-    default void waitForServer(Stack stack, boolean defaultClusterManagerAuth) throws CloudbreakException, ClusterClientInitException {
+    default void waitForServer(boolean defaultClusterManagerAuth) throws CloudbreakException, ClusterClientInitException {
         clusterSetupService().waitForServer(defaultClusterManagerAuth);
     }
 
@@ -31,7 +29,7 @@ public interface ClusterApi {
         return clusterSetupService().getSdxContext();
     }
 
-    default ExtendedPollingResult waitForHosts(Set<InstanceMetaData> hostsInCluster) throws ClusterClientInitException {
+    default ExtendedPollingResult waitForHosts(Set<InstanceMetadataView> hostsInCluster) throws ClusterClientInitException {
         return clusterSetupService().waitForHosts(hostsInCluster);
     }
 
@@ -63,7 +61,8 @@ public interface ClusterApi {
         return clusterModificationService().upscaleCluster(instanceMetaDatasByHostGroup);
     }
 
-    default void upgradeClusterRuntime(Set<ClusterComponent> components, boolean patchUpgrade, Optional<String> remoteDataContext) throws CloudbreakException {
+    default void upgradeClusterRuntime(Set<ClusterComponentView> components, boolean patchUpgrade, Optional<String> remoteDataContext)
+            throws CloudbreakException {
         clusterModificationService().upgradeClusterRuntime(components, patchUpgrade, remoteDataContext);
     }
 
@@ -87,27 +86,15 @@ public interface ClusterApi {
         return clusterModificationService().deployConfigAndStartClusterServices();
     }
 
-    default Set<ParcelInfo> gatherInstalledParcels(String stackName) {
+    default Map<String, String> gatherInstalledParcels(String stackName) {
         return clusterModificationService().gatherInstalledParcels(stackName);
     }
 
-    default Set<ParcelInfo> getAllParcels(String stackName) {
-        return clusterModificationService().getAllParcels(stackName);
+    default void downloadAndDistributeParcels(Set<ClusterComponentView> components, boolean patchUpgrade) throws CloudbreakException {
+        clusterModificationService().downloadAndDistributeParcels(components, patchUpgrade);
     }
 
-    default void updateParcelSettings(Set<ClouderaManagerProduct> products) throws CloudbreakException {
-        clusterModificationService().updateParcelSettings(products);
-    }
-
-    default void downloadParcels(Set<ClouderaManagerProduct> products) throws CloudbreakException {
-        clusterModificationService().downloadParcels(products);
-    }
-
-    default void distributeParcels(Set<ClouderaManagerProduct> products) throws CloudbreakException {
-        clusterModificationService().distributeParcels(products);
-    }
-
-    default ParcelOperationStatus removeUnusedParcels(Set<ClusterComponent> usedParcelComponents, Set<String> parcelNamesFromImage)
+    default ParcelOperationStatus removeUnusedParcels(Set<ClusterComponentView> usedParcelComponents, Set<String> parcelNamesFromImage)
             throws CloudbreakException {
         return clusterModificationService().removeUnusedParcels(usedParcelComponents, parcelNamesFromImage);
     }

@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.sequenceiq.cloudbreak.core.flow2.stack.start.StackStartStopService;
-import com.sequenceiq.cloudbreak.domain.view.StackView;
-import com.sequenceiq.cloudbreak.service.stack.StackService;
+import com.sequenceiq.cloudbreak.service.stack.StackDtoService;
+import com.sequenceiq.cloudbreak.view.StackView;
 import com.sequenceiq.flow.core.FlowTriggerCondition;
 import com.sequenceiq.flow.core.FlowTriggerConditionResult;
 
@@ -17,7 +17,7 @@ public class StackStopFlowTriggerCondition implements FlowTriggerCondition {
     private static final Logger LOGGER = LoggerFactory.getLogger(StackStopFlowTriggerCondition.class);
 
     @Inject
-    private StackService stackService;
+    private StackDtoService stackDtoService;
 
     @Inject
     private StackStartStopService stackStartStopService;
@@ -25,7 +25,7 @@ public class StackStopFlowTriggerCondition implements FlowTriggerCondition {
     @Override
     public FlowTriggerConditionResult isFlowTriggerable(Long stackId) {
         FlowTriggerConditionResult result = FlowTriggerConditionResult.OK;
-        StackView stack = stackService.getViewByIdWithoutAuth(stackId);
+        StackView stack = stackDtoService.getStackViewById(stackId);
         if (!stackStartStopService.isStopPossible(stack)) {
             String msg = "Stopping stack is not possible because stack is not in stop requested state.";
             LOGGER.debug(msg);

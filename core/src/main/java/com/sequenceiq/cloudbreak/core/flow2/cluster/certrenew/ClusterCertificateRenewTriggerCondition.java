@@ -6,9 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.service.publicendpoint.GatewayPublicEndpointManagementService;
-import com.sequenceiq.cloudbreak.service.stack.StackService;
+import com.sequenceiq.cloudbreak.service.stack.StackDtoService;
+import com.sequenceiq.cloudbreak.view.StackView;
 import com.sequenceiq.flow.core.FlowTriggerCondition;
 import com.sequenceiq.flow.core.FlowTriggerConditionResult;
 
@@ -17,7 +17,7 @@ public class ClusterCertificateRenewTriggerCondition implements FlowTriggerCondi
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCertificateRenewTriggerCondition.class);
 
     @Inject
-    private StackService stackService;
+    private StackDtoService stackDtoService;
 
     @Inject
     private GatewayPublicEndpointManagementService gatewayPublicEndpointManagementService;
@@ -25,8 +25,8 @@ public class ClusterCertificateRenewTriggerCondition implements FlowTriggerCondi
     @Override
     public FlowTriggerConditionResult isFlowTriggerable(Long stackId) {
         FlowTriggerConditionResult result = FlowTriggerConditionResult.OK;
-        Stack stack = stackService.getByIdWithTransaction(stackId);
-        boolean resourcesIsInTriggerableState = stack.isAvailable() && stack.getCluster() != null;
+        StackView stack = stackDtoService.getStackViewById(stackId);
+        boolean resourcesIsInTriggerableState = stack.isAvailable() && stack.getClusterId() != null;
         if (!resourcesIsInTriggerableState) {
             String msg = "Certificate renewal could not be triggered, because the cluster's state is not available.";
             LOGGER.info(msg);
