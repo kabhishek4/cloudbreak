@@ -67,6 +67,10 @@ public class RedbeamsUpgradeActions {
                 );
             }
 
+            @Override
+            protected RedbeamsContext createFlowContext(FlowParameters flowParameters, StateContext<RedbeamsUpgradeState, RedbeamsUpgradeEvent> stateContext, RedbeamsStartUpgradeRequest payload) {
+                return super.createFlowContext(flowParameters, stateContext, payload);
+            }
         };
     }
 

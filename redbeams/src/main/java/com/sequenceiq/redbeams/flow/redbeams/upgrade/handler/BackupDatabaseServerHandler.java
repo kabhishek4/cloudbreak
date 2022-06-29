@@ -6,6 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.sequenceiq.cloudbreak.cloud.CloudConnector;
+import com.sequenceiq.cloudbreak.cloud.context.AuthenticatedContext;
+import com.sequenceiq.cloudbreak.cloud.context.CloudContext;
+import com.sequenceiq.cloudbreak.cloud.init.CloudPlatformConnectors;
+import com.sequenceiq.cloudbreak.cloud.model.CloudCredential;
+import com.sequenceiq.cloudbreak.cloud.model.DatabaseStack;
+import com.sequenceiq.cloudbreak.cloud.notification.PersistenceNotifier;
 import com.sequenceiq.cloudbreak.common.event.Selectable;
 import com.sequenceiq.flow.event.EventSelectorUtil;
 import com.sequenceiq.flow.reactor.api.handler.ExceptionCatcherEventHandler;
@@ -25,6 +32,12 @@ public class BackupDatabaseServerHandler extends ExceptionCatcherEventHandler<Ba
 
     @Inject
     private DBStackService dbStackService;
+
+    @Inject
+    private CloudPlatformConnectors cloudPlatformConnectors;
+
+    @Inject
+    private PersistenceNotifier persistenceNotifier;
 
     @Override
     public String selector() {
@@ -46,9 +59,13 @@ public class BackupDatabaseServerHandler extends ExceptionCatcherEventHandler<Ba
         BackupDatabaseServerRequest request = event.getData();
         DBStack dbStack = dbStackService.getById(request.getResourceId());
         Selectable response;
+        DatabaseStack databaseStack = request.getDatabaseStack();
+        CloudCredential cloudCredential = request.getCloudCredential();
+        CloudContext cloudContext = request.getCloudContext();
+        CloudConnector<Object> connector = cloudPlatformConnectors.get(cloudContext.getPlatformVariant());
+        AuthenticatedContext ac = connector.authentication().authenticate(cloudContext, cloudCredential);
         try {
-            // TODO add the backup code
-
+//            connector.resources().prepareUpgradeDatabaseServer(ac, databaseStack, persistenceNotifier, request.getTargetMajorVersion().getVersion());
             response = new BackupDatabaseServerSuccess(request.getResourceId());
             LOGGER.debug("Successfully backed up the database server {}", dbStack);
         } catch (Exception e) {
