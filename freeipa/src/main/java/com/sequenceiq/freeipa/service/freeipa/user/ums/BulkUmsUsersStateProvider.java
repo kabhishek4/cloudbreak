@@ -3,6 +3,7 @@ package com.sequenceiq.freeipa.service.freeipa.user.ums;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -10,14 +11,18 @@ import java.util.stream.IntStream;
 
 import javax.inject.Inject;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.cloudera.thunderhead.service.usermanagement.UserManagementProto;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.sequenceiq.cloudbreak.auth.altus.GrpcUmsClient;
 import com.sequenceiq.cloudbreak.auth.crn.RegionAwareInternalCrnGeneratorFactory;
+import com.sequenceiq.cloudbreak.logger.MDCUtils;
+import com.sequenceiq.freeipa.service.freeipa.user.UserSyncConstants;
 import com.sequenceiq.freeipa.service.freeipa.user.conversion.FmsUserConverter;
 import com.sequenceiq.freeipa.service.freeipa.user.model.EnvironmentAccessRights;
 import com.sequenceiq.freeipa.service.freeipa.user.model.FmsGroup;
@@ -76,15 +81,13 @@ public class BulkUmsUsersStateProvider extends BaseUmsUsersStateProvider {
 
                     addRequestedWorkloadUsernames(umsUsersStateBuilder, requestedWorkloadUsernames);
                     addGroupsToUsersStateBuilder(usersStateBuilder, groups.values());
-                    Set<String> wagNamesForOtherEnvironments =
-                            addWagsToUsersStateBuilder(usersStateBuilder, wags, environmentCrn);
 
                     ActorHandler actorHandler = ActorHandler.newBuilder()
                             .withFmsGroupConverter(getFmsGroupConverter())
                             .withUmsUsersStateBuilder(umsUsersStateBuilder)
                             .withUsersStateBuilder(usersStateBuilder)
                             .withCrnToFmsGroup(groups)
-                            .withWagNamesForOtherEnvironments(wagNamesForOtherEnvironments)
+                            .withWagNamesForOtherEnvironments(Set.of())
                             .build();
                     addActorsToUmsUsersStateBuilder(
                             environmentIndex,
@@ -152,6 +155,69 @@ public class BulkUmsUsersStateProvider extends BaseUmsUsersStateProvider {
                 }
             }
         });
+    }
+
+    private List<String> getVirtualGroupNamesByActor(List<UserManagementProto.WorkloadAdministrationGroup> orderedRelatedWags,
+            UserManagementProto.RightsCheckResult rightsCheckResult) {
+        Map<UserManagementProto.WorkloadAdministrationGroup, Boolean> result = Maps.newHashMap();
+        orderedRelatedWags.stream().forEach(wag -> {
+            int wagIndex = orderedRelatedWags.indexOf(wag);
+            result.put(wag, rightsCheckResult.getHasRight(wagIndex));
+        });
+        return result.entrySet().stream()
+                .filter(Map.Entry::getValue)
+                .map(entry -> entry.getKey().getWorkloadAdministrationGroupName())
+                .collect(Collectors.toList());
+    }
+
+    private List<String> getGroupNamesByActor(List<UserManagementProto.Group> allGroups, List<UserManagementProto.Group> relatedGroups,
+            UserManagementProto.UserSyncActor actor) {
+        return actor.getGroupIndexList().stream()
+                .map(groupIndex -> allGroups.get(groupIndex).getCrn())
+                .filter(groupCrn -> relatedGroups.stream().map(UserManagementProto.Group::getCrn)
+                        .collect(Collectors.toList()).contains(groupCrn))
+                .collect(Collectors.toList());
+    }
+
+    private List<UserManagementProto.Group> getRelatedGroups(UserManagementProto.GetUserSyncStateModelResponse userSyncStateModel,
+            List<String> resourceAssigneesCrns) {
+        return userSyncStateModel.getGroupList().stream()
+                .filter(group -> resourceAssigneesCrns.contains(group.getCrn()))
+                .collect(Collectors.toList());
+    }
+
+    private List<UserManagementProto.UserSyncActor> getRelatedActors(UserManagementProto.GetUserSyncStateModelResponse userSyncStateModel,
+            List<String> resourceAssigneesCrns) {
+        return userSyncStateModel.getActorList().stream()
+                .filter(userSyncActor -> resourceAssigneesCrns.contains(userSyncActor.getActorDetails().getCrn()) ||
+                        userSyncActor.getGroupIndexList().stream()
+                                .anyMatch(groupIndex -> resourceAssigneesCrns.contains(userSyncStateModel.getGroup(groupIndex).getCrn())))
+                .filter(userSyncActor -> userSyncActor.getRightsCheckResultList().stream()
+                        .anyMatch(rightsCheckResult -> rightsCheckResult.getHasRightList().stream().anyMatch(Boolean::booleanValue)))
+                .collect(Collectors.toList());
+    }
+
+    private List<String> getResourceAssignees(String environmentCrn) {
+        return grpcUmsClient.listAssigneesOfResource(environmentCrn, MDCUtils.getRequestId())
+                .stream()
+                .map(UserManagementProto.ResourceAssignee::getAssigneeCrn)
+                .collect(Collectors.toList());
+    }
+
+    private List<UserManagementProto.WorkloadAdministrationGroup> getRelatedWagsOrderedByRightCheck(
+            Map<UserManagementProto.WorkloadAdministrationGroup, FmsGroup> wags,
+            String environmentCrn, UsersState.Builder usersStateBuilder) {
+        List<UserManagementProto.WorkloadAdministrationGroup> orderedRelatedWags = Lists.newArrayList();
+        List<UserManagementProto.WorkloadAdministrationGroup> relatedWags =
+                addWagsToUsersStateBuilder(usersStateBuilder, wags, environmentCrn);
+        UserSyncConstants.RIGHTS.stream().forEach(right -> {
+            Optional<UserManagementProto.WorkloadAdministrationGroup> wagByRight = relatedWags.stream().filter(wag ->
+                    StringUtils.equals(wag.getRightName(), right)).findFirst();
+            if (wagByRight.isPresent()) {
+                orderedRelatedWags.add(wagByRight.get());
+            }
+        });
+        return orderedRelatedWags;
     }
 
 }

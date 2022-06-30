@@ -1,6 +1,18 @@
 package com.sequenceiq.freeipa.service.freeipa.user.ums;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.cloudera.thunderhead.service.usermanagement.UserManagementProto;
+import com.google.common.collect.Lists;
 import com.sequenceiq.cloudbreak.auth.crn.Crn;
 import com.sequenceiq.freeipa.service.freeipa.user.UserSyncConstants;
 import com.sequenceiq.freeipa.service.freeipa.user.conversion.FmsGroupConverter;
@@ -8,16 +20,6 @@ import com.sequenceiq.freeipa.service.freeipa.user.model.FmsGroup;
 import com.sequenceiq.freeipa.service.freeipa.user.model.UmsUsersState;
 import com.sequenceiq.freeipa.service.freeipa.user.model.UserSyncOptions;
 import com.sequenceiq.freeipa.service.freeipa.user.model.UsersState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class BaseUmsUsersStateProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseUmsUsersStateProvider.class);
@@ -55,29 +57,19 @@ public class BaseUmsUsersStateProvider {
         builder.addGroup(fmsGroupConverter.nameToGroup(UserSyncConstants.CDP_USERSYNC_INTERNAL_GROUP));
     }
 
-    Set<String> addWagsToUsersStateBuilder(
+    List<UserManagementProto.WorkloadAdministrationGroup> addWagsToUsersStateBuilder(
             UsersState.Builder builder,
             Map<UserManagementProto.WorkloadAdministrationGroup, FmsGroup> wags,
             String environmentCrn) {
-        Set<String> wagNamesForOtherEnvironments = new HashSet<>();
-        // Only add workload admin groups that belong to this environment.
-        // At the same time, build a set of workload admin groups that are
-        // associated with other environments so we can filter these out in
-        // the per-user group listing in handleUser.
+        List<UserManagementProto.WorkloadAdministrationGroup> relatedWags = Lists.newArrayList();
         wags.entrySet().forEach(wagEntry -> {
             UserManagementProto.WorkloadAdministrationGroup wag = wagEntry.getKey();
-            String groupName = wag.getWorkloadAdministrationGroupName();
             if (wag.getResource().equalsIgnoreCase(environmentCrn)) {
                 builder.addGroup(wagEntry.getValue());
-            } else {
-                Crn resourceCrn = getCrn(wag);
-                if (resourceCrn != null && resourceCrn.getService() == Crn.Service.ENVIRONMENTS
-                        && resourceCrn.getResourceType() == Crn.ResourceType.ENVIRONMENT) {
-                    wagNamesForOtherEnvironments.add(groupName);
-                }
+                relatedWags.add(wag);
             }
         });
-        return wagNamesForOtherEnvironments;
+        return relatedWags;
     }
 
     private Crn getCrn(UserManagementProto.WorkloadAdministrationGroup wag) {
