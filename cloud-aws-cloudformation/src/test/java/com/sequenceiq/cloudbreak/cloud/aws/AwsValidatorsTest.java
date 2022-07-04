@@ -70,7 +70,6 @@ import com.sequenceiq.cloudbreak.cloud.model.InstanceTemplate;
 import com.sequenceiq.cloudbreak.cloud.model.Location;
 import com.sequenceiq.cloudbreak.cloud.model.Region;
 import com.sequenceiq.cloudbreak.service.CloudbreakResourceReaderService;
-import com.sequenceiq.cloudbreak.service.Retry;
 import com.sequenceiq.cloudbreak.service.RetryService;
 import com.sequenceiq.common.api.type.InstanceGroupType;
 import com.sequenceiq.common.api.type.OutboundInternetTraffic;
@@ -92,17 +91,8 @@ public class AwsValidatorsTest {
     @Inject
     private AwsStackValidator awsStackValidatorUnderTest;
 
-    @Inject
-    private AwsAuthenticator awsAuthenticator;
-
     @Mock
     private AmazonCloudFormationClient amazonCloudFormationClient;
-
-    @Inject
-    private SdkClientExceptionMapper sdkClientExceptionMapper;
-
-    @Inject
-    private Retry retry;
 
     @SpyBean
     private AwsCloudFormationClient awsClient;

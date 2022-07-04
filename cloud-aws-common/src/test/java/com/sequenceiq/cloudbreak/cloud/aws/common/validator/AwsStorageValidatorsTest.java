@@ -70,7 +70,6 @@ import com.sequenceiq.cloudbreak.cloud.model.Volume;
 import com.sequenceiq.cloudbreak.cloud.model.VolumeParameterConfig;
 import com.sequenceiq.cloudbreak.cloud.model.VolumeParameterType;
 import com.sequenceiq.cloudbreak.service.CloudbreakResourceReaderService;
-import com.sequenceiq.cloudbreak.service.Retry;
 import com.sequenceiq.cloudbreak.service.RetryService;
 import com.sequenceiq.common.api.type.InstanceGroupType;
 import com.sequenceiq.common.api.type.OutboundInternetTraffic;
@@ -91,15 +90,6 @@ public class AwsStorageValidatorsTest {
 
     @Inject
     private AwsStorageValidator awsStorageValidatorUnderTest;
-
-    @Inject
-    private AwsAuthenticator awsAuthenticator;
-
-    @Inject
-    private SdkClientExceptionMapper sdkClientExceptionMapper;
-
-    @Inject
-    private Retry retry;
 
     @MockBean
     private Tracer tracer;

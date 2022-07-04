@@ -300,7 +300,7 @@ public class ClusterHostServiceRunner {
         hostOrchestrator.initServiceRun(stack, gatewayConfigs, allNodes, reachableNodes, saltConfig,
                 exitCriteriaModel, stack.getCloudPlatform());
         mountDisks(stack, candidateAddresses, allNodes, reachableNodes);
-        recipeEngine.executePreClusterManagerRecipes(stack, candidateAddresses, hostGroupService.getByClusterWithRecipes(cluster.getId()));
+        recipeEngine.executePreServiceDeploymentRecipes(stack, candidateAddresses, hostGroupService.getByClusterWithRecipes(cluster.getId()));
         hostOrchestrator.runService(gatewayConfigs, reachableNodes, saltConfig, exitCriteriaModel);
         modifyStartupMountRole(stack, reachableNodes, GrainOperation.REMOVE);
     }
@@ -614,7 +614,8 @@ public class ClusterHostServiceRunner {
 
     private void decoratePillarWithClouderaManagerDatabase(Cluster cluster, Map<String, SaltPillarProperties> servicePillar)
             throws CloudbreakOrchestratorFailedException {
-        RdsConfigWithoutCluster clouderaManagerRdsConfig = rdsConfigWithoutClusterService.findByClusterIdAndType(cluster.getId(), DatabaseType.CLOUDERA_MANAGER);
+        RdsConfigWithoutCluster clouderaManagerRdsConfig =
+                rdsConfigWithoutClusterService.findByClusterIdAndType(cluster.getId(), DatabaseType.CLOUDERA_MANAGER);
         if (clouderaManagerRdsConfig == null) {
             throw new CloudbreakOrchestratorFailedException("Cloudera Manager RDSConfig is missing for stack");
         }

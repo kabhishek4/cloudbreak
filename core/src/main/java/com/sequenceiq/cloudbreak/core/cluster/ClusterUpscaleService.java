@@ -120,7 +120,7 @@ public class ClusterUpscaleService {
     public void executePostRecipesOnNewHosts(Long stackId, Map<String, Integer> hostGroupWithAdjustment) throws CloudbreakException {
         Stack stack = stackService.getByIdWithListsInTransaction(stackId);
         LOGGER.debug("Start executing post recipes");
-        recipeEngine.executePostInstallRecipesOnTargets(stack, hostGroupService.getByClusterWithRecipes(stack.getCluster().getId()),
+        recipeEngine.executePostServiceDeploymentRecipes(stack, hostGroupService.getByClusterWithRecipes(stack.getCluster().getId()),
                 clusterHostServiceRunner.collectUpscaleCandidates(stack.getCluster().getId(), hostGroupWithAdjustment, false));
     }
 

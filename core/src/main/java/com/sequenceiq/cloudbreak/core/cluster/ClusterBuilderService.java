@@ -226,10 +226,10 @@ public class ClusterBuilderService implements PaasRemoteDataContextSupplier {
         }
     }
 
-    public void executePostInstallRecipes(Long stackId) throws CloudbreakException {
+    public void executePostServiceDeploymentRecipes(Long stackId) throws CloudbreakException {
         StackView stackView = stackService.getViewByIdWithoutAuth(stackId);
         if (stackView.getClusterView() != null) {
-            recipeEngine.executePostInstallRecipes(
+            recipeEngine.executePostServiceDeploymentRecipes(
                     stackService.getByIdWithListsInTransaction(stackId), hostGroupService.getByClusterWithRecipes(stackView.getClusterView().getId()));
         }
     }

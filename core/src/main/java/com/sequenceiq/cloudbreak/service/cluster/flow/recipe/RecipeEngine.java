@@ -74,14 +74,14 @@ public class RecipeEngine {
         LOGGER.info("Upload recipes finished successfully for stack with name {}", stack.getName());
     }
 
-    public void executePreClusterManagerRecipes(Stack stack, Map<String, String> candidateAddresses, Set<HostGroup> hostGroups) throws CloudbreakException {
+    public void executePreServiceDeploymentRecipes(Stack stack, Map<String, String> candidateAddresses, Set<HostGroup> hostGroups) throws CloudbreakException {
         Collection<Recipe> recipes = hostGroupService.getRecipesByHostGroups(hostGroups);
         if (shouldExecuteRecipeOnStack(recipes, PRE_CLOUDERA_MANAGER_START, PRE_SERVICE_DEPLOYMENT)) {
             uploadRecipesIfNeeded(stack, hostGroups);
             if (MapUtils.isEmpty(candidateAddresses)) {
-                orchestratorRecipeExecutor.preClusterManagerStartRecipes(stack);
+                orchestratorRecipeExecutor.preServiceDeploymentRecipes(stack);
             } else {
-                orchestratorRecipeExecutor.preClusterManagerStartRecipesOnTargets(stack, candidateAddresses);
+                orchestratorRecipeExecutor.preServiceDeploymentRecipesOnTargets(stack, candidateAddresses);
             }
         }
     }
@@ -103,19 +103,19 @@ public class RecipeEngine {
         }
     }
 
-    public void executePostInstallRecipes(Stack stack, Set<HostGroup> hostGroups) throws CloudbreakException {
+    public void executePostServiceDeploymentRecipes(Stack stack, Set<HostGroup> hostGroups) throws CloudbreakException {
         Collection<Recipe> recipes = hostGroupService.getRecipesByHostGroups(hostGroups);
         if (shouldExecuteRecipeOnStack(recipes, POST_CLUSTER_INSTALL, POST_SERVICE_DEPLOYMENT)) {
             uploadRecipesIfNeeded(stack, hostGroups);
-            orchestratorRecipeExecutor.postClusterInstall(stack);
+            orchestratorRecipeExecutor.postServiceDeploymentRecipes(stack);
         }
     }
 
-    public void executePostInstallRecipesOnTargets(Stack stack, Set<HostGroup> hostGroups, Map<String, String> candidateAddresses) throws CloudbreakException {
+    public void executePostServiceDeploymentRecipes(Stack stack, Set<HostGroup> hostGroups, Map<String, String> candidateAddresses) throws CloudbreakException {
         Collection<Recipe> recipes = hostGroupService.getRecipesByHostGroups(hostGroups);
         if (shouldExecuteRecipeOnStack(recipes, POST_CLUSTER_INSTALL, POST_SERVICE_DEPLOYMENT)) {
             uploadRecipesIfNeeded(stack, hostGroups);
-            orchestratorRecipeExecutor.postClusterInstallOnTargets(stack, candidateAddresses);
+            orchestratorRecipeExecutor.postServiceDeploymentRecipesOnTargets(stack, candidateAddresses);
         }
     }
 

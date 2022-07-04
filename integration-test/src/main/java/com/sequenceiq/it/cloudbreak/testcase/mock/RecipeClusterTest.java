@@ -122,7 +122,7 @@ public class RecipeClusterTest extends AbstractMockTest {
         testContext
                 .given(recipeName, RecipeTestDto.class)
                     .withName(recipeName)
-                    .withContent(recipeUtil.generatePreCmStartRecipeContent(applicationContext))
+                    .withContent(recipeUtil.generatePreDeploymentRecipeContent(applicationContext))
                     .withRecipeType(PRE_CLOUDERA_MANAGER_START)
                 .when(recipeTestClient.createV4(), RunningParameter.key(recipeName))
                 .when(recipeTestClient.deleteV4(), RunningParameter.key(recipeName))
@@ -153,7 +153,7 @@ public class RecipeClusterTest extends AbstractMockTest {
                 .when(recipeTestClient.createV4())
                 .given(RecipeTestDto.class)
                     .withName(preCldrManagerStartRecipe)
-                    .withContent(recipeUtil.generatePreCmStartRecipeContent(applicationContext))
+                    .withContent(recipeUtil.generatePreDeploymentRecipeContent(applicationContext))
                     .withRecipeType(PRE_CLOUDERA_MANAGER_START)
                 .when(recipeTestClient.createV4())
                 .given(INSTANCE_GROUP_ID, InstanceGroupTestDto.class)
@@ -193,7 +193,7 @@ public class RecipeClusterTest extends AbstractMockTest {
         testContext
                 .given(RecipeTestDto.class)
                     .withName(recipeName)
-                    .withContent(recipeUtil.generatePostInstallRecipeContent(applicationContext))
+                    .withContent(recipeUtil.generatePostDeploymentRecipeContent(applicationContext))
                     .withRecipeType(POST_CLUSTER_INSTALL)
                 .when(recipeTestClient.createV4())
                 .given(INSTANCE_GROUP_ID, InstanceGroupTestDto.class)

@@ -1,5 +1,7 @@
 package com.sequenceiq.cloudbreak.domain.stack.instance;
 
+import static com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.InstanceStatus.DECOMMISSIONED;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -186,7 +188,7 @@ public class InstanceGroup implements ProvisionEntity, Comparable<InstanceGroup>
 
     public Set<InstanceMetaData> getUnattachedInstanceMetaDataSet() {
         return instanceMetaData.stream()
-                .filter(metaData -> metaData.getInstanceStatus() == InstanceStatus.CREATED)
+                .filter(metaData -> metaData.getInstanceStatus() == InstanceStatus.CREATED || metaData.getInstanceStatus() == DECOMMISSIONED)
                 .collect(Collectors.toSet());
     }
 
