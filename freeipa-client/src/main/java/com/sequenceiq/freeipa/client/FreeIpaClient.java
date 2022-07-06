@@ -17,7 +17,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,16 +138,31 @@ public class FreeIpaClient {
         }
     }
 
-    public Set<User> userFindAll() throws FreeIpaClientException {
-        List<Object> flags = List.of();
-        Map<String, Object> params = Map.of(
-                "sizelimit", 0,
-                "timelimit", 0,
-                "all", true
-        );
+    public Set<String> userListAllUids() throws FreeIpaClientException {
+        return userFindAll(Optional.empty(), Map.of("pkey_only", true)).stream()
+                .map(User::getUid)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Finds all users in FreeIPA. This command sends a user_find request with the sizelimit
+     * and timelimit set to 0.
+     *
+     * @param flag              the search string
+     * @param additionalParams  additional parameters, e.g., ("all", true) or ("pkey_only", true)
+     * @return Set of found Users
+     */
+    public Set<User> userFindAll(Optional<String> flag, Map<String, Object> additionalParams)
+            throws FreeIpaClientException {
+        List<Object> flags = flag.isEmpty() ? List.of() : List.of(flag.get());
+        ImmutableMap.Builder<String, Object> params = ImmutableMap.<String, Object>builder()
+                .put("sizelimit", 0)
+                .put("timelimit", 0);
+        additionalParams.entrySet().forEach(entry -> params.put(entry.getKey(), entry.getValue()));
+
         ParameterizedType type = TypeUtils
                 .parameterize(Set.class, User.class);
-        return (Set<User>) invoke("user_find", flags, params, type).getResult();
+        return (Set<User>) invoke("user_find", flags, params.build(), type).getResult();
     }
 
     public void userDisable(String user) throws FreeIpaClientException {

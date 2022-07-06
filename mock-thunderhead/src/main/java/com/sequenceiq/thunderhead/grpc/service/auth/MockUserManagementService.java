@@ -72,6 +72,7 @@ import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_SHOW_CL
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_TARGETED_UPSCALE;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_UNBOUND_ELIMINATION;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_USERSYNC_ENFORCE_GROUP_MEMBER_LIMIT;
+import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_USERSYNC_SPLIT_FREEIPA_USER_RETRIEVAL;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_USER_SYNC_CREDENTIALS_UPDATE_OPTIMIZATION;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_USE_CM_SYNC_COMMAND_POLLER;
 import static com.sequenceiq.cloudbreak.auth.altus.model.Entitlement.CDP_VM_DIAGNOSTICS;
@@ -536,6 +537,9 @@ public class MockUserManagementService extends UserManagementImplBase {
     @Value("${auth.mock.user.sync.group-size.enforce-limit.enable}")
     private boolean enableUsersyncEnforceGroupMemberLimit;
 
+    @Value("${auth.mock.user.sync.split-freeipa-user-retrieval.enable}")
+    private boolean enableUsersyncSplitFreeIPAUserRetrieval;
+
     @PostConstruct
     public void init() {
         cbLicense = getLicense();
@@ -983,6 +987,9 @@ public class MockUserManagementService extends UserManagementImplBase {
         }
         if (enableUsersyncEnforceGroupMemberLimit) {
             builder.addEntitlements(createEntitlement(CDP_USERSYNC_ENFORCE_GROUP_MEMBER_LIMIT));
+        }
+        if (enableUsersyncSplitFreeIPAUserRetrieval) {
+            builder.addEntitlements(createEntitlement(CDP_USERSYNC_SPLIT_FREEIPA_USER_RETRIEVAL));
         }
         responseObserver.onNext(
                 GetAccountResponse.newBuilder()

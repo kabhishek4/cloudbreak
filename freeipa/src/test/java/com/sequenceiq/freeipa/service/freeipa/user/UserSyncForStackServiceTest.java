@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -108,7 +109,7 @@ class UserSyncForStackServiceTest {
         UsersState usersState = mock(UsersState.class);
         when(usersState.getUsers()).thenReturn(ImmutableSet.of());
         when(usersState.getGroups()).thenReturn(ImmutableSet.of());
-        when(freeIpaUsersStateProvider.getUsersState(FREE_IPA_CLIENT)).thenReturn(usersState);
+        when(freeIpaUsersStateProvider.getUsersState(FREE_IPA_CLIENT, false)).thenReturn(usersState);
         UsersStateDifference usersStateDifference = mock(UsersStateDifference.class);
         when(userStateDifferenceCalculator.fromUmsAndIpaUsersStates(eq(umsUsersState), eq(usersState), eq(options), any()))
                 .thenReturn(usersStateDifference);
@@ -139,7 +140,7 @@ class UserSyncForStackServiceTest {
         UsersState usersState = mock(UsersState.class);
         when(usersState.getUsers()).thenReturn(ImmutableSet.of());
         when(usersState.getGroups()).thenReturn(ImmutableSet.of());
-        when(freeIpaUsersStateProvider.getUsersState(FREE_IPA_CLIENT)).thenReturn(usersState);
+        when(freeIpaUsersStateProvider.getUsersState(FREE_IPA_CLIENT, false)).thenReturn(usersState);
         UsersStateDifference usersStateDifference = mock(UsersStateDifference.class);
         when(userStateDifferenceCalculator.fromUmsAndIpaUsersStates(eq(umsUsersState), eq(usersState), eq(options), any()))
                 .thenReturn(usersStateDifference);
@@ -170,7 +171,7 @@ class UserSyncForStackServiceTest {
         UsersState usersState = mock(UsersState.class);
         when(usersState.getUsers()).thenReturn(ImmutableSet.of());
         when(usersState.getGroups()).thenReturn(ImmutableSet.of());
-        when(freeIpaUsersStateProvider.getUsersState(FREE_IPA_CLIENT)).thenReturn(usersState);
+        when(freeIpaUsersStateProvider.getUsersState(FREE_IPA_CLIENT, false)).thenReturn(usersState);
         UsersStateDifference usersStateDifference = mock(UsersStateDifference.class);
         when(userStateDifferenceCalculator.fromUmsAndIpaUsersStates(eq(umsUsersState), eq(usersState), eq(options), any()))
                 .thenReturn(usersStateDifference);
@@ -215,7 +216,7 @@ class UserSyncForStackServiceTest {
 
         SyncStatusDetail result = underTest.synchronizeStack(STACK, umsUsersState, options, OPERATION_ID);
 
-        verify(freeIpaUsersStateProvider, never()).getUsersState(any());
+        verify(freeIpaUsersStateProvider, never()).getUsersState(any(), anyBoolean());
         verify(stateApplier).applyDifference(eq(umsUsersState), eq(ENV_CRN), any(), eq(usersStateDifference), eq(options), eq(FREE_IPA_CLIENT));
         verifyNoMoreInteractions(stateApplier);
         verifyNoInteractions(cloudIdentitySyncService);
@@ -251,7 +252,7 @@ class UserSyncForStackServiceTest {
 
         SyncStatusDetail result = underTest.synchronizeStack(STACK, umsUsersState, options, OPERATION_ID);
 
-        verify(freeIpaUsersStateProvider, never()).getUsersState(any());
+        verify(freeIpaUsersStateProvider, never()).getUsersState(any(), anyBoolean());
         verify(stateApplier).applyDifference(eq(umsUsersState), eq(ENV_CRN), any(), eq(usersStateDifference), eq(options), eq(FREE_IPA_CLIENT));
         verifyNoMoreInteractions(stateApplier);
         verifyNoInteractions(cloudIdentitySyncService);
