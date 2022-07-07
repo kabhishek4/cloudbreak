@@ -2,6 +2,7 @@ package com.sequenceiq.it.cloudbreak.util.ssh.action;
 
 import static java.lang.String.format;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,18 +15,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.response.instancegroup.InstanceGroupV4Response;
 import com.sequenceiq.cloudbreak.common.json.Json;
+import com.sequenceiq.cloudbreak.common.json.JsonUtil;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.instance.InstanceMetaDataResponse;
 import com.sequenceiq.it.cloudbreak.FreeIpaClient;
 import com.sequenceiq.it.cloudbreak.dto.AbstractFreeIpaTestDto;
 import com.sequenceiq.it.cloudbreak.dto.AbstractSdxTestDto;
+import com.sequenceiq.it.cloudbreak.dto.CloudbreakTestDto;
 import com.sequenceiq.it.cloudbreak.dto.distrox.DistroXTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeIpaTestDto;
 import com.sequenceiq.it.cloudbreak.dto.sdx.SdxTestDto;
@@ -293,10 +298,9 @@ public class SshJClientActions extends SshJClient {
                         .stream()
                         .map(countObject -> (Integer) countObject)
                         .collect(Collectors.toList());
-            LOGGER.info(format("heartbeatEventCounts: %s", heartbeatEventCounts));
             Log.log(LOGGER, format(" Found '%s' Metering Heartbeat Events at '%s' instance. ", heartbeatEventCounts, meteringStatusReport.getKey()));
             if (CollectionUtils.isEmpty(heartbeatEventCounts) || heartbeatEventCounts.contains(0)) {
-                LOGGER.error("Metering Heartbeat Events does NOT generated on '{}' instance!", meteringStatusReport.getKey());
+                Log.error(LOGGER, format(" Metering Heartbeat Events does NOT generated on '%s' instance! ", meteringStatusReport.getKey()));
                 throw new TestFailException(format("Metering Heartbeat Events does NOT generated on '%s' instance!", meteringStatusReport.getKey()));
             }
         }
@@ -310,17 +314,86 @@ public class SshJClientActions extends SshJClient {
                     if (StringUtils.containsIgnoreCase(event, "databusReachable")) {
                         Log.log(LOGGER, format(" Found 'databusReachable' status is not OK at '%s' instance. However this is acceptable!",
                                 meteringStatusReport.getKey()));
-                        LOGGER.warn("Found 'databusReachable' status is not OK at '{}' instance. However this is acceptable!", meteringStatusReport.getKey());
                     } else {
-                        Log.log(LOGGER, format(" Found '%s' not OK at '%s' instance. ", event, meteringStatusReport.getKey()));
-                        LOGGER.error("There is 'Not OK' Metering Heartbeat status {} is present on '{}' instance!", event, meteringStatusReport.getKey());
+                        Log.error(LOGGER, format(" There is 'Not OK' Metering Heartbeat status %s is present on '%s' instance! ", event,
+                                meteringStatusReport.getKey()));
                         throw new TestFailException(format("There is 'Not OK' Metering Heartbeat status %s is present on '%s' instance!", event,
                                 meteringStatusReport.getKey()));
                     }
                 });
             }
         }
-
         return testDto;
     }
+
+    /**
+     * Creating new pre-warmed images with Common Monitoring is still in progress. So in the meantime we can install latest version on the VMs manually.
+     *
+     * @param instanceGroups An instance group is a collection of virtual machine (VM) instances that you can manage as a single entity.
+     * @param hostGroupNames A host group logically grouped hosts regardless of any features that they might or might not have in common.
+     *                          For example: hosts do not have to have the same architecture, configuration, or storage.
+     */
+    private void preconditionsMonitoringStatusCheck(List<String> instanceIps) {
+        String installTelemetrySnapshot =
+                "sudo /opt/salt/scripts/cdp-telemetry-deployer.sh upgrade -c cdp-telemetry -v snapshot > /dev/null 2>&1";
+        String removeOldTelemetry = "sudo yum remove -y cdp-telemetry > /dev/null 2>&1";
+        String addTelemetrySnapshotPackage =
+                "sudo rpm -i https://cloudera-service-delivery-cache.s3.amazonaws.com/telemetry/cdp-telemetry/cdp_telemetry-0.1.0-SNAPSHOT.x86_64.rpm " +
+                        "> /dev/null 2>&1";
+
+        instanceIps.stream()
+                .collect(Collectors.toMap(ip -> ip, ip -> executeSshCommand(ip, StringUtils.join(List.of(installTelemetrySnapshot, removeOldTelemetry,
+                        addTelemetrySnapshotPackage), " && "))));
+    }
+
+    public <T extends CloudbreakTestDto> T checkMonitoringStatus(T testDto, List<InstanceGroupV4Response> instanceGroups, List<String> hostGroupNames,
+            String metricNames) {
+        List<String> instanceIps = getInstanceGroupIps(instanceGroups, hostGroupNames, false);
+        return checkMonitoringStatus(testDto, instanceIps, metricNames);
+    }
+
+    public FreeIpaTestDto checkMonitoringStatus(FreeIpaTestDto testDto, String environmentCrn, FreeIpaClient freeipaClient, String metricNames) {
+        List<String> instanceIps = getFreeIpaInstanceGroupIps(environmentCrn, freeipaClient, false);
+        return checkMonitoringStatus(testDto, instanceIps, metricNames);
+    }
+
+    public <T extends CloudbreakTestDto> T checkMonitoringStatus(T testDto, List<String> instanceIps, String metricNames) {
+
+        preconditionsMonitoringStatusCheck(instanceIps);
+
+        String monitoringStatusCommand = format("sudo cdp-doctor monitoring status -m %s --format json", metricNames);
+        Map<String, Pair<Integer, String>> monitoringStatusReportByIp = instanceIps.stream()
+                .collect(Collectors.toMap(ip -> ip, ip -> executeSshCommand(ip, monitoringStatusCommand)));
+        for (Entry<String, Pair<Integer, String>> monitoringStatusReport : monitoringStatusReportByIp.entrySet()) {
+            try {
+                List<String> statusCategories = List.of("services", "scrapping", "metrics");
+                Map<String, Map<String, String>> fetchedMonitoringStatus = JsonUtil.readValue(monitoringStatusReport.getValue().getValue(),
+                        new TypeReference<Map<String, Map<String, String>>>() { });
+                statusCategories.forEach(statusCategory -> {
+                    Map<String, String> statusesNotOkInCategory = fetchedMonitoringStatus.entrySet().stream()
+                            .filter(categories -> statusCategory.equalsIgnoreCase(categories.getKey()))
+                            .flatMap(selectedCategory -> selectedCategory.getValue().entrySet().stream()
+                                            .filter(sercicesInCategory -> "NOK".equalsIgnoreCase(sercicesInCategory.getValue())))
+                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                    if (MapUtils.isNotEmpty(statusesNotOkInCategory)) {
+                        statusesNotOkInCategory.forEach((service, status) -> {
+                            if (StringUtils.containsIgnoreCase(service, "cdp-request-signer")) {
+                                Log.log(LOGGER, format(" Found Monitoring '%s' where 'cdp-request-signer' is 'Not OK' at '%s' instance. " +
+                                        "However this is acceptable! ", statusCategory.toUpperCase(), monitoringStatusReport.getKey()));
+                            } else {
+                                Log.error(LOGGER, format(" Found Monitoring '%s' where '%s' is 'Not OK' at '%s' instance! ", statusCategory.toUpperCase(),
+                                        service, monitoringStatusReport.getKey()));
+                                throw new TestFailException(format("Found Monitoring '%s' where '%s' is 'Not OK' at '%s' instance!",
+                                        statusCategory.toUpperCase(), service, monitoringStatusReport.getKey()));
+                            }
+                        });
+                    }
+                });
+            } catch (IOException | IllegalStateException e) {
+                throw new TestFailException("Cannot parse Common Monitoring Status Report JSON: ", e);
+            }
+        }
+        return testDto;
+    }
+
 }
