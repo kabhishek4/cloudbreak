@@ -32,6 +32,7 @@ import com.sequenceiq.it.cloudbreak.dto.distrox.DistroXTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentNetworkTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeIpaTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 import com.sequenceiq.it.cloudbreak.dto.sdx.SdxInternalTestDto;
 import com.sequenceiq.sdx.api.model.SdxClusterStatusResponse;
 
@@ -86,6 +87,7 @@ public class EnvironmentStartStopTest extends AbstractMockTest {
                 .given(EnvironmentTestDto.class).withNetwork().withCreateFreeIpa(false)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
                 .given(FreeIpaTestDto.class)
                 .when(freeIpaTestClient.create())
                 .await(AVAILABLE)
@@ -114,6 +116,7 @@ public class EnvironmentStartStopTest extends AbstractMockTest {
                 .given(EnvironmentTestDto.class).withNetwork().withCreateFreeIpa(false)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
                 .given(FreeIpaTestDto.class)
                 .when(freeIpaTestClient.create())
                 .await(AVAILABLE)
@@ -183,6 +186,7 @@ public class EnvironmentStartStopTest extends AbstractMockTest {
                 .given(EnvironmentTestDto.class).withNetwork().withCreateFreeIpa(false)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
                 .given(FreeIpaTestDto.class)
                 .when(freeIpaTestClient.create())
                 .await(AVAILABLE)

@@ -110,7 +110,7 @@ public class EnvironmentTestDto
                 .withCredentialName(getTestContext().get(CredentialTestDto.class).getName())
                 .withAuthentication(getTestContext().given(EnvironmentAuthenticationTestDto.class))
                 .withCloudplatform(getCloudPlatform().toString())
-                .withIdBrokerMappingSource(IdBrokerMappingSource.MOCK)
+                .withIdBrokerMappingSource(IdBrokerMappingSource.IDBMMS)
                 .withResourceGroup(getResourceGroupUsage(), getResourceGroupName())
                 .withNetwork()
                 .withCloudStorageValidation(CloudStorageValidation.ENABLED)
@@ -151,8 +151,8 @@ public class EnvironmentTestDto
         return this;
     }
 
-    public EnvironmentTestDto withMockIDBMS() {
-        getRequest().setIdBrokerMappingSource(IdBrokerMappingSource.MOCK);
+    public EnvironmentTestDto withIdBrokerMappingSource() {
+        getRequest().setIdBrokerMappingSource(IdBrokerMappingSource.IDBMMS);
         return this;
     }
 

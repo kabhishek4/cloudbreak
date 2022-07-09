@@ -20,6 +20,7 @@ import com.sequenceiq.it.cloudbreak.context.RunningParameter;
 import com.sequenceiq.it.cloudbreak.context.TestContext;
 import com.sequenceiq.it.cloudbreak.dto.credential.CredentialTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 import com.sequenceiq.it.cloudbreak.dto.stack.StackTestDto;
 import com.sequenceiq.it.cloudbreak.exception.TestFailException;
 
@@ -82,6 +83,7 @@ public class EnvironmentClusterTest extends AbstractMockTest {
                 .given(EnvironmentTestDto.class)
                 .when(environmentTestClient.create())
                 .when(environmentTestClient.describe())
+                .init(IdbmmsTestDto.class)
                 .given(StackTestDto.class)
                 .withEnvironmentClass(EnvironmentTestDto.class)
                 .when(stackTestClient.createV4())
@@ -106,6 +108,7 @@ public class EnvironmentClusterTest extends AbstractMockTest {
                 .given(EnvironmentTestDto.class)
                 .when(environmentTestClient.create())
                 .when(environmentTestClient.describe())
+                .init(IdbmmsTestDto.class)
                 .given(StackTestDto.class)
                 .withEnvironmentCrn("")
                 .whenException(stackTestClient.createV4(), BadRequestException.class, expectedMessage("Environment CRN cannot be null or empty."))
@@ -115,7 +118,8 @@ public class EnvironmentClusterTest extends AbstractMockTest {
     private void createEnvWithResources(MockedTestContext testContext) {
         testContext.given(EnvironmentTestDto.class)
                 .when(environmentTestClient.create())
-                .when(environmentTestClient.describe());
+                .when(environmentTestClient.describe())
+                .init(IdbmmsTestDto.class);
     }
 
     private void checkCredentialAttachedToCluster(MockedTestContext testContext) {

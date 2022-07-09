@@ -16,6 +16,7 @@ import com.sequenceiq.it.cloudbreak.context.TestContext;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeIpaChildEnvironmentTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeIpaTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 
 public class FreeIpaAttachDetachChildEnvironmentTest extends AbstractMockTest {
 
@@ -48,6 +49,7 @@ public class FreeIpaAttachDetachChildEnvironmentTest extends AbstractMockTest {
                     .withCreateFreeIpa(Boolean.FALSE)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
                 .given(FreeIpaChildEnvironmentTestDto.class)
                 .when(freeIpaTestClient.attachChildEnvironment())
                 .then(FreeIpaChildEnvironmentAssertion.validateChildFreeipa())
@@ -69,6 +71,7 @@ public class FreeIpaAttachDetachChildEnvironmentTest extends AbstractMockTest {
                     .withCreateFreeIpa(Boolean.FALSE)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
                 .given(FreeIpaChildEnvironmentTestDto.class)
                 .when(freeIpaTestClient.attachChildEnvironment())
                 .given(FreeIpaTestDto.class)
@@ -92,6 +95,7 @@ public class FreeIpaAttachDetachChildEnvironmentTest extends AbstractMockTest {
                     .withCreateFreeIpa(Boolean.FALSE)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
                 .given(FreeIpaChildEnvironmentTestDto.class)
                 .when(freeIpaTestClient.attachChildEnvironment())
                 .when(freeIpaTestClient.detachChildEnvironment())

@@ -24,6 +24,7 @@ import com.sequenceiq.it.cloudbreak.context.RunningParameter;
 import com.sequenceiq.it.cloudbreak.context.TestContext;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeIpaTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 import com.sequenceiq.it.cloudbreak.exception.TestFailException;
 
 public class EnvironmentChildTest extends AbstractMockTest {
@@ -185,6 +186,7 @@ public class EnvironmentChildTest extends AbstractMockTest {
                 .withParentEnvironment()
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
                 .given("child2", EnvironmentTestDto.class)
                 .withParentEnvironment()
                 .when(environmentTestClient.create())

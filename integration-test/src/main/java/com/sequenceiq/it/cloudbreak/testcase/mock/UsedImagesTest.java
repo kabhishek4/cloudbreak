@@ -26,6 +26,7 @@ import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentNetworkTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeIpaTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeipaUsedImagesTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 import com.sequenceiq.it.cloudbreak.dto.imagecatalog.ImageCatalogTestDto;
 import com.sequenceiq.it.cloudbreak.dto.sdx.SdxInternalTestDto;
 import com.sequenceiq.it.cloudbreak.dto.util.UsedImagesTestDto;
@@ -89,7 +90,7 @@ public class UsedImagesTest extends AbstractMockTest {
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
                 .when(environmentTestClient.describe())
-
+                .init(IdbmmsTestDto.class)
                 .given(FreeIpaTestDto.class)
                     .withCatalog(getImageCatalogMockServerSetup().getFreeIpaImageCatalogUrlWitdDefaultImageUuid(freeipaImageUuid))
                 .when(freeIpaTestClient.create())

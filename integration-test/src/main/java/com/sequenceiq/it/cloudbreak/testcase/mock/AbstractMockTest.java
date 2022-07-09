@@ -11,6 +11,7 @@ import com.sequenceiq.it.cloudbreak.client.FreeIpaTestClient;
 import com.sequenceiq.it.cloudbreak.context.TestContext;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeIpaTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 import com.sequenceiq.it.cloudbreak.mock.ExecuteQueryToMockInfrastructure;
 import com.sequenceiq.it.cloudbreak.mock.ImageCatalogMockServerSetup;
 import com.sequenceiq.it.cloudbreak.testcase.AbstractIntegrationTest;
@@ -69,6 +70,7 @@ public abstract class AbstractMockTest extends AbstractIntegrationTest {
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
                 .when(environmentTestClient.describe())
+                .init(IdbmmsTestDto.class)
                 .validate();
     }
 

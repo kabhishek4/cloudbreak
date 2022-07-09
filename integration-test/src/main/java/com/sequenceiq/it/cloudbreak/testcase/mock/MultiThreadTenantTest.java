@@ -45,6 +45,7 @@ import com.sequenceiq.it.cloudbreak.dto.distrox.DistroXTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentNetworkTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeIpaTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 import com.sequenceiq.it.cloudbreak.dto.imagecatalog.ImageCatalogTestDto;
 import com.sequenceiq.it.cloudbreak.dto.sdx.SdxInternalTestDto;
 import com.sequenceiq.it.cloudbreak.exception.TestCaseDescriptionMissingException;
@@ -221,6 +222,7 @@ public class MultiThreadTenantTest extends AbstractTestNGSpringContextTests {
                 .given(EnvironmentTestDto.class).withNetwork()
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
                 .given(FreeIpaTestDto.class).withEnvironment()
                 .when(freeIpaTestClient.create())
                 .await(com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.Status.AVAILABLE)

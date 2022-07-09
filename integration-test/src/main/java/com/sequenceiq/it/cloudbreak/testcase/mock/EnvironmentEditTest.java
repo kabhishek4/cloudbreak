@@ -18,6 +18,7 @@ import com.sequenceiq.it.cloudbreak.context.TestContext;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentAuthenticationTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentSecurityAccessTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 import com.sequenceiq.it.cloudbreak.dto.mock.HttpMock;
 import com.sequenceiq.it.cloudbreak.exception.TestFailException;
 
@@ -68,6 +69,7 @@ public class EnvironmentEditTest extends AbstractMockTest {
                 .withCreateFreeIpa(false)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
 
                 .given(EnvironmentAuthenticationTestDto.class)
                 .withPublicKeyId(randomPublicKeyId)
@@ -104,6 +106,7 @@ public class EnvironmentEditTest extends AbstractMockTest {
                 .withCreateFreeIpa(false)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
 
                 .given(EnvironmentAuthenticationTestDto.class)
                 .withPublicKey(PUBLIC_KEY)
@@ -144,6 +147,7 @@ public class EnvironmentEditTest extends AbstractMockTest {
                 .withCreateFreeIpa(false)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
 
                 .given(EnvironmentAuthenticationTestDto.class)
                 .withPublicKeyId(value)
@@ -172,6 +176,7 @@ public class EnvironmentEditTest extends AbstractMockTest {
                 .withCreateFreeIpa(false)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
 
                 .given(EnvironmentAuthenticationTestDto.class)
                 .withPublicKey(PUBLIC_KEY)
@@ -199,6 +204,7 @@ public class EnvironmentEditTest extends AbstractMockTest {
                 .withCreateFreeIpa(false)
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
 
                 .given(EnvironmentSecurityAccessTestDto.class)
                 .withCidr("cidr")

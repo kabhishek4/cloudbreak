@@ -32,6 +32,7 @@ import com.sequenceiq.it.cloudbreak.context.TestContext;
 import com.sequenceiq.it.cloudbreak.dto.credential.CredentialTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
 import com.sequenceiq.it.cloudbreak.dto.freeipa.FreeIpaTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 import com.sequenceiq.it.cloudbreak.dto.recipe.RecipeTestDto;
 import com.sequenceiq.it.cloudbreak.exception.TestFailException;
 import com.sequenceiq.it.cloudbreak.mock.ImageCatalogMockServerSetup;
@@ -128,6 +129,7 @@ public class EnvironmentTest extends AbstractMockTest {
                 .await(EnvironmentStatus.AVAILABLE)
                 .getResponse().setCrn(invalidCrn);
         testContext
+                .init(IdbmmsTestDto.class)
                 .given(EnvironmentTestDto.class)
                 .whenException(environmentTestClient.describeByCrn(), BadRequestException.class,
                         expectedMessage(".*Crn provided: " +
@@ -218,6 +220,7 @@ public class EnvironmentTest extends AbstractMockTest {
                 .withFreeIpaImage(imageCatalogMockServerSetup.getFreeIpaImageCatalogUrl(), "f6e778fc-7f17-4535-9021-515351df3691")
                 .when(environmentTestClient.create())
                 .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class)
                 .given(FreeIpaTestDto.class)
                 .when(freeIpaTestClient.describe())
                 .then((testContext1, testDto, client) -> {

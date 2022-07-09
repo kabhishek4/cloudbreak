@@ -21,6 +21,7 @@ import com.sequenceiq.it.cloudbreak.dto.InstanceGroupTestDto;
 import com.sequenceiq.it.cloudbreak.dto.PlacementSettingsTestDto;
 import com.sequenceiq.it.cloudbreak.dto.database.RedbeamsDatabaseTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 import com.sequenceiq.it.cloudbreak.dto.ldap.LdapTestDto;
 import com.sequenceiq.it.cloudbreak.dto.stack.StackTestDto;
 
@@ -62,6 +63,7 @@ public class EnvironmentDatalakeClusterTest extends AbstractMockTest {
         testContext.given(EnvironmentTestDto.class)
                 .withLocation(VALID_LOCATION)
                 .when(environmentTestClient.create())
+                .init(IdbmmsTestDto.class)
                 .given(ClusterTestDto.class).valid()
                 .withRdsConfigNames(rdsList)
                 .given("placement", PlacementSettingsTestDto.class)
@@ -95,6 +97,7 @@ public class EnvironmentDatalakeClusterTest extends AbstractMockTest {
         testContext.given(EnvironmentTestDto.class)
                 .withLocation(VALID_LOCATION)
                 .when(environmentTestClient.create())
+                .init(IdbmmsTestDto.class)
                 .given(ClusterTestDto.class).valid()
                 .withRdsConfigNames(rdsList)
                 .given("placement", PlacementSettingsTestDto.class)
@@ -123,6 +126,7 @@ public class EnvironmentDatalakeClusterTest extends AbstractMockTest {
         Set<String> rdsList = createDatalakeResources(testContext, hivedb, rangerdb);
         testContext.given(EnvironmentTestDto.class)
                 .when(environmentTestClient.create())
+                .init(IdbmmsTestDto.class)
                 .validate();
         createDatalake(testContext, rdsList);
         createDatalake(testContext, rdsList);
@@ -141,6 +145,7 @@ public class EnvironmentDatalakeClusterTest extends AbstractMockTest {
         Set<String> rdsList = createDatalakeResources(testContext, hivedb, rangerdb);
         testContext.given(EnvironmentTestDto.class)
                 .when(environmentTestClient.create())
+                .init(IdbmmsTestDto.class)
                 .given("placement", PlacementSettingsTestDto.class)
                 .given(StackTestDto.class)
                 .withName(dlName)

@@ -21,6 +21,7 @@ import com.sequenceiq.it.cloudbreak.context.MockedTestContext;
 import com.sequenceiq.it.cloudbreak.context.TestContext;
 import com.sequenceiq.it.cloudbreak.dto.credential.CredentialTestDto;
 import com.sequenceiq.it.cloudbreak.dto.environment.EnvironmentTestDto;
+import com.sequenceiq.it.cloudbreak.dto.idbmms.IdbmmsTestDto;
 
 public class EnvironmentExperienceTest extends AbstractMockTest {
 
@@ -52,7 +53,8 @@ public class EnvironmentExperienceTest extends AbstractMockTest {
                 .when(environmentTestClient.create())
                 .enableVerification(LIFTIE_API_ROOT)
                 .enableVerification()
-                .await(EnvironmentStatus.AVAILABLE);
+                .await(EnvironmentStatus.AVAILABLE)
+                .init(IdbmmsTestDto.class);
         String envName = testContext.given(EnvironmentTestDto.class).getName();
         String crn = testContext.given(EnvironmentTestDto.class).getCrn();
         String tenant = testContext.getActingUserCrn().getAccountId();
