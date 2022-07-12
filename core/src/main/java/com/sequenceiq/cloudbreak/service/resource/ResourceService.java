@@ -92,4 +92,13 @@ public class ResourceService {
     public Optional<Resource> findFirstByStatusAndTypeAndStack(CommonStatus status, ResourceType resourceType, Long stackId) {
         return repository.findFirstByResourceStatusAndResourceTypeAndStackId(status, resourceType, stackId);
     }
+
+    public Collection<Resource> getAllByStackIdAndStatuses(Long stackId, Collection<CommonStatus> statuses) {
+        return repository.findAllByStackIdAndStatusIn(stackId, statuses);
+    }
+
+    public List<Resource> findAllByStackIdAndResourceTypeIn(Long stackId, Collection<ResourceType> resourceTypes) {
+        return repository.findAllByStackIdAndResourceTypeIn(stackId, resourceTypes);
+    }
+
 }
