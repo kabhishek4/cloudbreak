@@ -333,7 +333,7 @@ public class SshJClientActions extends SshJClient {
      * @param hostGroupNames A host group logically grouped hosts regardless of any features that they might or might not have in common.
      *                          For example: hosts do not have to have the same architecture, configuration, or storage.
      */
-    private void preconditionsMonitoringStatusCheck(List<String> instanceIps) {
+    private void installMonitoringSnapshot(List<String> instanceIps) {
         String installTelemetrySnapshot =
                 "sudo /opt/salt/scripts/cdp-telemetry-deployer.sh upgrade -c cdp-telemetry -v snapshot > /dev/null 2>&1";
         String removeOldTelemetry = "sudo yum remove -y cdp-telemetry > /dev/null 2>&1";
@@ -346,22 +346,34 @@ public class SshJClientActions extends SshJClient {
                         addTelemetrySnapshotPackage), " && "))));
     }
 
+    private void createHugheFilesForMonitoringStatusCheck(List<String> instanceIps) {
+        String removeAllocatedFiles = "sudo rm -rf test_file{0001..0004}.txt";
+        String listDisk = "sudo df -h /";
+        String allocateBigFiles = "sudo seq -f '%04.0f' 4 | xargs -I '{}' fallocate -l 5G test_file'{}'.txt";
+
+        instanceIps.stream()
+                .collect(Collectors.toMap(ip -> ip, ip -> executeSshCommand(ip,
+                        StringUtils.join(List.of(allocateBigFiles, listDisk, removeAllocatedFiles),
+                                " && "))));
+    }
+
     public <T extends CloudbreakTestDto> T checkMonitoringStatus(T testDto, List<InstanceGroupV4Response> instanceGroups, List<String> hostGroupNames,
-            String metricNames) {
+            List<String> metricNames) {
         List<String> instanceIps = getInstanceGroupIps(instanceGroups, hostGroupNames, false);
-        return checkMonitoringStatus(testDto, instanceIps, metricNames);
+        return checkMonitoringStatus(testDto, instanceIps, metricNames, null, null);
     }
 
-    public FreeIpaTestDto checkMonitoringStatus(FreeIpaTestDto testDto, String environmentCrn, FreeIpaClient freeipaClient, String metricNames) {
+    public FreeIpaTestDto checkMonitoringStatus(FreeIpaTestDto testDto, String environmentCrn, FreeIpaClient freeipaClient, List<String> metricNames) {
         List<String> instanceIps = getFreeIpaInstanceGroupIps(environmentCrn, freeipaClient, false);
-        return checkMonitoringStatus(testDto, instanceIps, metricNames);
+        return checkMonitoringStatus(testDto, instanceIps, metricNames, null, null);
     }
 
-    public <T extends CloudbreakTestDto> T checkMonitoringStatus(T testDto, List<String> instanceIps, String metricNames) {
+    public <T extends CloudbreakTestDto> T checkMonitoringStatus(T testDto, List<String> instanceIps, List<String> metricNames, List<String> serviceNames,
+            List<String> scrappingNames) {
 
-        preconditionsMonitoringStatusCheck(instanceIps);
+        installMonitoringSnapshot(instanceIps);
 
-        String monitoringStatusCommand = format("sudo cdp-doctor monitoring status -m %s --format json", metricNames);
+        String monitoringStatusCommand = format("sudo cdp-doctor monitoring status -m %s --format json", StringUtils.join(metricNames, ","));
         Map<String, Pair<Integer, String>> monitoringStatusReportByIp = instanceIps.stream()
                 .collect(Collectors.toMap(ip -> ip, ip -> executeSshCommand(ip, monitoringStatusCommand)));
         for (Entry<String, Pair<Integer, String>> monitoringStatusReport : monitoringStatusReportByIp.entrySet()) {

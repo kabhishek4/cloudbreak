@@ -53,11 +53,11 @@ public class SshJUtil {
     }
 
     public <T extends CloudbreakTestDto> T checkCommonMonitoringStatus(T testDto, List<InstanceGroupV4Response> instanceGroups, List<String> hostGroupNames,
-            String metricNames) {
+            List<String> metricNames) {
         return sshJClientActions.checkMonitoringStatus(testDto, instanceGroups, hostGroupNames, metricNames);
     }
 
-    public FreeIpaTestDto checkCommonMonitoringStatus(FreeIpaTestDto testDto, String environmentCrn, FreeIpaClient freeipaClient, String metricNames) {
+    public FreeIpaTestDto checkCommonMonitoringStatus(FreeIpaTestDto testDto, String environmentCrn, FreeIpaClient freeipaClient, List<String> metricNames) {
         return sshJClientActions.checkMonitoringStatus(testDto, environmentCrn, freeipaClient, metricNames);
     }
 }

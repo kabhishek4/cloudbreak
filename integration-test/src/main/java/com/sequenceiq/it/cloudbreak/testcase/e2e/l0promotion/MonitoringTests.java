@@ -93,7 +93,7 @@ public class MonitoringTests extends AbstractE2ETest {
                     .withEnvironment()
                 .when(freeIpaTestClient.describe())
                 .then((tc, testDto, client) -> sshJUtil.checkCommonMonitoringStatus(testDto, testDto.getEnvironmentCrn(), client,
-                        "node_filesystem_free_bytes"))
+                        List.of("node_filesystem_free_bytes")))
                 .given(EnvironmentTestDto.class)
                 .when(environmentTestClient.describe())
                 .validate();
@@ -140,7 +140,7 @@ public class MonitoringTests extends AbstractE2ETest {
                 .given(FreeIpaTestDto.class)
                 .when(freeIpaTestClient.describe())
                 .then((tc, testDto, client) -> sshJUtil.checkCommonMonitoringStatus(testDto, testDto.getEnvironmentCrn(), client,
-                        "node_filesystem_free_bytes"))
+                        List.of("node_filesystem_free_bytes")))
                 .given(EnvironmentTestDto.class)
                 .when(environmentTestClient.describe())
                 .given(SdxInternalTestDto.class)
@@ -153,7 +153,7 @@ public class MonitoringTests extends AbstractE2ETest {
                 .awaitForHealthyInstances()
                 .when(sdxTestClient.describeInternal())
                 .then((tc, testDto, client) -> sshJUtil.checkCommonMonitoringStatus(testDto, testDto.getResponse().getStackV4Response().getInstanceGroups(),
-                        List.of(MASTER.getName()), "node_filesystem_free_bytes,cm_health_check_info"))
+                        List.of(MASTER.getName()), List.of("node_filesystem_free_bytes", "cm_health_check_info")))
                 .given(DistroXImageTestDto.class)
                     .withImageId(commonCloudProperties().getImageValidation().getImageUuid())
                     .withImageCatalog(commonCloudProperties().getImageValidation().getSourceCatalogName())
@@ -166,7 +166,7 @@ public class MonitoringTests extends AbstractE2ETest {
                 .awaitForHealthyInstances()
                 .when(distroXTestClient.get())
                 .then((tc, testDto, client) -> sshJUtil.checkCommonMonitoringStatus(testDto, testDto.getResponse().getInstanceGroups(),
-                        List.of(MASTER.getName()), "node_filesystem_free_bytes,cm_health_check_info"))
+                        List.of(MASTER.getName()), List.of("node_filesystem_free_bytes", "cm_health_check_info")))
                 .validate();
     }
 }
