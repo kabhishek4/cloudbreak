@@ -51,7 +51,6 @@ import com.sequenceiq.cloudbreak.api.endpoint.v4.dto.NameOrCrn;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.StatusRequest;
 import com.sequenceiq.cloudbreak.common.exception.BadRequestException;
 import com.sequenceiq.cloudbreak.common.service.TransactionService;
-import com.sequenceiq.cloudbreak.core.bootstrap.service.ClusterBootstrapper;
 import com.sequenceiq.cloudbreak.core.flow2.service.ReactorFlowManager;
 import com.sequenceiq.cloudbreak.domain.StopRestrictionReason;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
@@ -59,6 +58,8 @@ import com.sequenceiq.cloudbreak.domain.stack.StackStatus;
 import com.sequenceiq.cloudbreak.domain.stack.cluster.Cluster;
 import com.sequenceiq.cloudbreak.domain.stack.instance.InstanceGroup;
 import com.sequenceiq.cloudbreak.domain.stack.instance.InstanceMetaData;
+import com.sequenceiq.cloudbreak.reactor.api.event.cluster.RotateSaltPasswordReason;
+import com.sequenceiq.cloudbreak.service.RotateSaltPasswordService;
 import com.sequenceiq.cloudbreak.service.StackUpdater;
 import com.sequenceiq.cloudbreak.service.cluster.ClusterService;
 import com.sequenceiq.cloudbreak.service.cluster.flow.ClusterOperationService;
@@ -76,6 +77,8 @@ import com.sequenceiq.flow.api.model.FlowType;
 
 @ExtendWith(MockitoExtension.class)
 public class StackOperationServiceTest {
+
+    private static final RotateSaltPasswordReason REASON = RotateSaltPasswordReason.MANUAL;
 
     @InjectMocks
     private StackOperationService underTest;
@@ -126,7 +129,7 @@ public class StackOperationServiceTest {
     private InstanceMetaDataService instanceMetaDataService;
 
     @Mock
-    private ClusterBootstrapper clusterBootstrapper;
+    private RotateSaltPasswordService rotateSaltPasswordService;
 
     @Test
     public void testStartWhenStackAvailable() {
@@ -450,14 +453,14 @@ public class StackOperationServiceTest {
         stack.setId(5L);
         when(stackService.getByNameOrCrnAndWorkspaceIdWithLists(nameOrCrn, workspaceId)).thenReturn(stack);
         FlowIdentifier flowIdentifier = new FlowIdentifier(FlowType.FLOW, "pollableId");
-        when(flowManager.triggerRotateSaltPassword(stack.getId())).thenReturn(flowIdentifier);
+        when(flowManager.triggerRotateSaltPassword(stack.getId(), REASON)).thenReturn(flowIdentifier);
 
-        FlowIdentifier result = underTest.rotateSaltPassword(nameOrCrn, workspaceId);
+        FlowIdentifier result = underTest.rotateSaltPassword(nameOrCrn, workspaceId, REASON);
 
         assertEquals(flowIdentifier, result);
         verify(stackService).getByNameOrCrnAndWorkspaceIdWithLists(nameOrCrn, workspaceId);
-        verify(clusterBootstrapper).validateRotateSaltPassword(stack);
-        verify(flowManager).triggerRotateSaltPassword(stack.getId());
+        verify(rotateSaltPasswordService).validateRotateSaltPassword(stack);
+        verify(flowManager).triggerRotateSaltPassword(stack.getId(), REASON);
     }
 
     private InstanceMetaData createInstanceMetadataForTest(Long privateId, String instanceGroupName) {

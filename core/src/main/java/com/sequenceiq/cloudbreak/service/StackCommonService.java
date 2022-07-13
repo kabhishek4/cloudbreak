@@ -47,6 +47,7 @@ import com.sequenceiq.cloudbreak.converter.v4.stacks.StackV4RequestToTemplatePre
 import com.sequenceiq.cloudbreak.domain.ImageCatalog;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.logger.MDCBuilder;
+import com.sequenceiq.cloudbreak.reactor.api.event.cluster.RotateSaltPasswordReason;
 import com.sequenceiq.cloudbreak.service.cluster.ClusterRepairService;
 import com.sequenceiq.cloudbreak.service.cluster.flow.ClusterOperationService;
 import com.sequenceiq.cloudbreak.service.image.ImageCatalogService;
@@ -278,11 +279,11 @@ public class StackCommonService {
         return putStartInWorkspace(stack);
     }
 
-    public FlowIdentifier rotateSaltPassword(NameOrCrn nameOrCrn, Long workspaceId) {
+    public FlowIdentifier rotateSaltPassword(NameOrCrn nameOrCrn, Long workspaceId, RotateSaltPasswordReason reason) {
         if (!entitlementService.isSaltUserPasswordRotationEnabled(ThreadBasedUserCrnProvider.getAccountId())) {
             throw new BadRequestException("Rotating SaltStack user password is not supported in your account");
         }
-        return stackOperationService.rotateSaltPassword(nameOrCrn, workspaceId);
+        return stackOperationService.rotateSaltPassword(nameOrCrn, workspaceId, reason);
     }
 
     private FlowIdentifier putStartInWorkspace(Stack stack) {

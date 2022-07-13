@@ -55,6 +55,7 @@ import com.sequenceiq.cloudbreak.domain.ImageCatalog;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.orchestrator.exception.CloudbreakOrchestratorException;
 import com.sequenceiq.cloudbreak.domain.stack.StackStatus;
+import com.sequenceiq.cloudbreak.reactor.api.event.cluster.RotateSaltPasswordReason;
 import com.sequenceiq.cloudbreak.service.image.ImageCatalogService;
 import com.sequenceiq.cloudbreak.service.image.ImageChangeDto;
 import com.sequenceiq.cloudbreak.service.stack.CloudParameterCache;
@@ -370,7 +371,8 @@ class StackCommonServiceTest {
     public void testRotateSaltPasswordWithoutEntitlement() {
         when(entitlementService.isSaltUserPasswordRotationEnabled(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> ThreadBasedUserCrnProvider.doAs(ACTOR_CRN, () -> underTest.rotateSaltPassword(STACK_CRN, WORKSPACE_ID)))
+        assertThatThrownBy(() ->
+                ThreadBasedUserCrnProvider.doAs(ACTOR_CRN, () -> underTest.rotateSaltPassword(STACK_CRN, WORKSPACE_ID, RotateSaltPasswordReason.MANUAL)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Rotating SaltStack user password is not supported in your account");
     }
@@ -379,10 +381,10 @@ class StackCommonServiceTest {
     public void testRotateSaltPassword() throws CloudbreakOrchestratorException {
         when(entitlementService.isSaltUserPasswordRotationEnabled(any())).thenReturn(true);
 
-        ThreadBasedUserCrnProvider.doAs(ACTOR_CRN, () -> underTest.rotateSaltPassword(STACK_CRN, WORKSPACE_ID));
+        ThreadBasedUserCrnProvider.doAs(ACTOR_CRN, () -> underTest.rotateSaltPassword(STACK_CRN, WORKSPACE_ID, RotateSaltPasswordReason.MANUAL));
 
         verify(entitlementService).isSaltUserPasswordRotationEnabled(any());
-        verify(stackOperationService).rotateSaltPassword(STACK_CRN, WORKSPACE_ID);
+        verify(stackOperationService).rotateSaltPassword(STACK_CRN, WORKSPACE_ID, RotateSaltPasswordReason.MANUAL);
     }
 
     @Test

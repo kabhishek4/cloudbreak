@@ -43,6 +43,7 @@ import com.sequenceiq.cloudbreak.converter.v4.stacks.view.StackApiViewToStackVie
 import com.sequenceiq.cloudbreak.domain.projection.StackCrnView;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.domain.view.StackApiView;
+import com.sequenceiq.cloudbreak.reactor.api.event.cluster.RotateSaltPasswordReason;
 import com.sequenceiq.cloudbreak.service.ClusterCommonService;
 import com.sequenceiq.cloudbreak.service.StackCommonService;
 import com.sequenceiq.cloudbreak.service.image.GenerateImageCatalogService;
@@ -249,9 +250,9 @@ public class StackOperationsTest {
         NameOrCrn nameOrCrn = NameOrCrn.ofName(stack.getName());
         long workspaceId = 0L;
 
-        underTest.rotateSaltPassword(nameOrCrn, workspaceId);
+        underTest.rotateSaltPassword(nameOrCrn, workspaceId, RotateSaltPasswordReason.MANUAL);
 
-        verify(stackCommonService).rotateSaltPassword(nameOrCrn, workspaceId);
+        verify(stackCommonService).rotateSaltPassword(nameOrCrn, workspaceId, RotateSaltPasswordReason.MANUAL);
     }
 
     private StackV4Response stackResponse() {

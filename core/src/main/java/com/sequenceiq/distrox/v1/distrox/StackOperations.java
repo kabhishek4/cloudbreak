@@ -59,6 +59,7 @@ import com.sequenceiq.cloudbreak.domain.projection.StackClusterStatusView;
 import com.sequenceiq.cloudbreak.domain.projection.StackCrnView;
 import com.sequenceiq.cloudbreak.domain.stack.Stack;
 import com.sequenceiq.cloudbreak.domain.view.StackApiView;
+import com.sequenceiq.cloudbreak.reactor.api.event.cluster.RotateSaltPasswordReason;
 import com.sequenceiq.cloudbreak.service.ClusterCommonService;
 import com.sequenceiq.cloudbreak.service.DatabaseBackupRestoreService;
 import com.sequenceiq.cloudbreak.service.LoadBalancerUpdateService;
@@ -258,8 +259,8 @@ public class StackOperations implements HierarchyAuthResourcePropertyProvider {
         return stackCommonService.putStartInWorkspace(nameOrCrn, workspaceId);
     }
 
-    public FlowIdentifier rotateSaltPassword(NameOrCrn nameOrCrn, Long workspaceId) {
-        return stackCommonService.rotateSaltPassword(nameOrCrn, workspaceId);
+    public FlowIdentifier rotateSaltPassword(NameOrCrn nameOrCrn, Long workspaceId, RotateSaltPasswordReason reason) {
+        return stackCommonService.rotateSaltPassword(nameOrCrn, workspaceId, reason);
     }
 
     public FlowIdentifier putScaling(@NotNull NameOrCrn nameOrCrn, Long workspaceId, @Valid StackScaleV4Request updateRequest) {
