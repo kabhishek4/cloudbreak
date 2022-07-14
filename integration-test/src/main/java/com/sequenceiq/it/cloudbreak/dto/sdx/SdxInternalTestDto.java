@@ -96,7 +96,8 @@ public class SdxInternalTestDto extends AbstractSdxTestDto<SdxInternalClusterReq
                 .withEnvironmentName(getTestContext().get(EnvironmentTestDto.class).getResponse().getName())
                 .withClusterShape(getCloudProvider().getInternalClusterShape())
                 .withTags(getCloudProvider().getTags())
-                .withRuntimeVersion(commonClusterManagerProperties.getRuntimeVersion());
+                .withRuntimeVersion(commonClusterManagerProperties.getRuntimeVersion())
+                .withEnableMultiAz(getCloudProvider().isMultiAZ());
         return getCloudProvider().sdxInternal(this);
     }
 
@@ -294,6 +295,16 @@ public class SdxInternalTestDto extends AbstractSdxTestDto<SdxInternalClusterReq
         image.setCatalog(imageCatalogName);
         image.setId(imageId);
         getRequest().getStackV4Request().setImage(image);
+        return this;
+    }
+
+    public SdxInternalTestDto withEnableMultiAz(boolean enableMultiAz) {
+        getRequest().setEnableMultiAz(enableMultiAz);
+        return this;
+    }
+
+    public SdxInternalTestDto withEnableMultiAz() {
+        getRequest().setEnableMultiAz(getCloudProvider().isMultiAZ());
         return this;
     }
 
